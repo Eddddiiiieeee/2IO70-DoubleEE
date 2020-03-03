@@ -1,5 +1,4 @@
-import sensorComponents.dzn;
-import motorComponents.dzn;
+import sortingSystem.dzn;
 
 interface IRobot {
 	in void start();

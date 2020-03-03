@@ -1,3 +1,15 @@
+interface IReturning {
+	in void start();
+	in void stop();
+	out void error();
+	
+	enum State {Running, Stopped, ERROR};
+	
+	behaviour {
+		
+	}
+}
+
 component ReturnSystem {
 	
 }
