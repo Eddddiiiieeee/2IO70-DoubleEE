@@ -1,0 +1,56 @@
+import interfaces.dzn;
+
+interface ITaking {
+	in void start();
+	in void stop();
+	out void error();
+	
+	enum State {Running, Stopped, ERROR};
+	
+	behaviour {
+		State state = State.Stopped;
+		
+		[state.Stopped] {
+			on start: {state = State.Running;}
+			on stop: illegal;
+		}
+		[state.Running] {
+			on start: illegal;
+			on stop: {state = State.Stopped;}
+			on optional: {error; state = State.ERROR;}
+		}
+		[state.ERROR] {
+			on start: illegal;
+			on stop: {state = State.Stopped;}
+		}
+	}
+}
+
+component TakingSystem {
+	provides ITaking takingSystem;
+	
+	system {
+		Taker taker;
+		DiskDetector detector;
+		Blocker blocker;
+		
+		takingSystem <=> taker.taker;
+		taker.diskDetector <=> detector.diskDetector;
+		taker.servo <=> blocker.servo;
+	}
+}
+
+component Taker {
+	provides ITaking taker;
+	
+	requires IMotor servo;
+	requires IBasicSensor diskDetector; // MAYBE COMMUNICATION FROM FACTORY?
+}
+
+component DiskDetector {
+	provides IBasicSensor diskDetector;
+}
+
+component Blocker {
+	provides IMotor servo;
+}

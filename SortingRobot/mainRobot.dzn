@@ -1,0 +1,46 @@
+import sensorComponents.dzn;
+import motorComponents.dzn;
+
+interface IRobot {
+	in void start();
+	in void stop();
+	
+	enum State {On, Off};
+	
+	behaviour {
+		State state = State.Off;
+		
+		[state.Off] {
+			on start: {state = State.On;}
+			on stop: {}
+		}
+		[state.On] {
+			on start: {}
+			on stop: {state = State.Off;}
+		}
+	}
+}
+
+component SortingRobotSystem {
+	provides IRobot robot;
+	
+	system {
+		RaspberryPi sorter;
+		
+		robot <=> sorter.sorter;
+	}
+}
+
+component RaspberryPi {
+	provides IRobot sorter;
+	
+}
+
+// Awaiting Finalization of Communications System
+component CommunicationSystem {
+	
+}
+
+
+
+

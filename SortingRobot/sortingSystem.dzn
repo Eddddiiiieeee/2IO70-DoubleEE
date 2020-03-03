@@ -1,0 +1,142 @@
+import interfaces.dzn;
+
+interface ISorter {
+	in void start();
+	in void stop();
+	out void error();
+	
+	enum State {Running, Stopped, ERROR};
+	
+	behaviour {
+		State state = State.Stopped;
+		
+		[state.Stopped] {
+			on start: {state = State.Running;}
+			on stop: illegal;
+		}
+		[state.Running] {
+			on start: illegal;
+			on stop: {state = State.Stopped;}
+			on optional: {error; state = State.ERROR;}
+		}
+		[state.ERROR] {
+			on start: illegal;
+			on stop: {state = State.Stopped;}
+		}
+	}
+}
+
+component SortingSystem {
+	provides ISorter sortingSystem;
+	
+	system {
+		Sorter sorter;
+		PositionalSensors positionSensor;
+		DiskSensor frontSensor;
+		DiskSensor backSensor; 
+		ColorSensor colorSensor;
+		BeltMotor beltMotor;
+		SortingPiston sortingPiston;
+		
+		sortingSystem <=> sorter.sorter;
+		sorter.positionSensors <=> positionSensor.iSensor;
+		
+		positionSensor.frontSensor <=> frontSensor.sensor;
+		positionSensor.backSensor <=> backSensor.sensor;
+		
+		sorter.colorSensor <=> colorSensor.colorSensor;
+		sorter.beltMotor <=> beltMotor.motor;
+		sorter.sortingPiston <=> sortingPiston.piston;
+	}
+}
+
+component Sorter {
+	provides ISorter sorter;
+	
+	requires IBasicSensor positionSensors;	
+	requires IColorSensor colorSensor;
+	requires IMotor beltMotor;
+	requires IPiston sortingPiston;
+}
+
+component PositionalSensors {
+	provides IBasicSensor iSensor;
+	
+	requires IBasicSensor frontSensor;
+	requires IBasicSensor backSensor;
+	
+	behaviour {
+		bool measuring = false;
+		bool frontSensorActive = false;
+		on iSensor.deactivate(): {
+			measuring = false;
+			frontSensorActive = false;
+			frontSensor.deactivate();
+			backSensor.deactivate();
+		}
+		
+		[!measuring] {
+			on iSensor.activate(): {
+				measuring = !measuring;
+				frontSensor.activate();
+				backSensor.activate();
+			}
+		}
+		[measuring] {
+			on iSensor.activate(): illegal;
+			[!frontSensorActive] {
+				on frontSensor.triggered(): {frontSensorActive = true;}
+				on backSensor.triggered(): {} // TODO: Make illegal in C++!!!
+			}
+			[frontSensorActive] {
+				//on frontSensor.triggered(): {} // TODO: Make illegal in C++???
+				on backSensor.triggered(): {
+					frontSensorActive = !frontSensorActive;
+					iSensor.triggered();
+					measuring = !measuring;
+				}
+			}
+		}
+	}
+}
+
+component DiskSensor {
+	provides IBasicSensor sensor;
+	
+	// Manual implementation in C++
+}
+
+component ColorSensor {
+	provides IColorSensor colorSensor;
+	
+	// Manual implementation in C++
+}
+
+component BeltMotor {
+	provides IMotor motor;
+	
+	behaviour {
+		IMotor.State state = IMotor.State.Idle;
+		
+		on motor.start(): {state = IMotor.State.Running;}
+		on motor.stop(): {state = IMotor.State.Idle;}
+	}
+}
+
+component SortingPiston {
+	provides IPiston piston;
+	
+	behaviour {
+		IPiston.State state = IPiston.State.Retracted;
+		
+		[state.Retracted] {
+			on piston.extend(): {state = IPiston.State.Extended;}
+			on piston.retract(): illegal;
+		}
+		[state.Extended] {
+			on piston.extend(): illegal;
+			on piston.retract(): {state = IPiston.State.Retracted;}
+		}
+	}
+}
+

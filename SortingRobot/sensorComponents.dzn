@@ -1,0 +1,13 @@
+import interfaces.dzn;
+
+component DiskDetector {
+	provides IBasicSensor sensor;
+}
+
+component ColorSensor {
+	provides IColorSensor sensor;
+}
+
+component beltMovementSensor {
+	provides IBasicSensor sensor;
+}

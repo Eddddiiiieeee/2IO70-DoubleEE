@@ -1,0 +1,74 @@
+interface IBasicSensor {
+	in void activate();
+	in void deactivate();
+	out void triggered();
+	
+	behaviour {
+		bool measuring = false;
+		
+		on deactivate: measuring = false;
+		
+		[!measuring] {
+			on activate: {measuring = !measuring;}
+		}
+		[measuring] {
+			on activate: illegal;
+			on optional: {triggered; measuring = !measuring;}
+		}
+	}
+}
+
+interface IColorSensor {
+	in void activate();
+	in void deactivate();
+	out void lightDisk();
+	out void darkDisk();
+	
+	behaviour {
+		bool measuring = false;
+		
+		on deactivate: measuring = false;
+		
+		[!measuring] {
+			on activate: {measuring = !measuring;}
+		}
+		[measuring] {
+			on activate: illegal;
+			on inevitable: {lightDisk; measuring = !measuring;}
+			on inevitable: {darkDisk; measuring = !measuring;}
+		}
+	}
+}
+
+
+interface IMotor {
+	enum State {Running, Idle};
+	in void start();
+	in void stop();
+	
+	behaviour {
+		State state = State.Idle;
+		
+		on start: {state = State.Running;}
+		on stop: {state = State.Idle;}
+	}
+}
+
+interface IPiston {
+	enum State {Extended, Retracted};
+	in void extend();
+	in void retract();
+	
+	behaviour {
+		State state = State.Retracted;
+		
+		[state.Retracted] {
+			on extend: {state = State.Extended;}
+			on retract: illegal;
+		}
+		[state.Extended] {
+			on extend: illegal;
+			on retract: {state = State.Retracted;}
+		}
+	}
+}

@@ -1,0 +1,25 @@
+import interfaces.dzn;
+
+component MotorSystem {
+	system {
+		
+	}
+}
+
+component MainBelt {
+	provides IMotor motor;
+}
+
+component FactoryBlocker {
+	
+}
+
+component SortingMotor {
+	
+}
+
+/*
+component ElevatorMotor {
+
+}
+ */
