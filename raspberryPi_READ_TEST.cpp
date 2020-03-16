@@ -1,7 +1,7 @@
 #include <iostream>
 #include <wiringPi.h>
 
-int main(){
+int main () {
     wiringPiSetup();
 
     pinMode(4, INPUT);

@@ -31,19 +31,13 @@ component SortingSystem {
 	
 	system {
 		Sorter sorter;
-		PositionalSensors positionSensor;
-		DiskSensor frontSensor;
-		DiskSensor backSensor; 
+		DiskSensor diskSensor; 
 		ColorSensor colorSensor;
 		BeltMotor beltMotor;
 		SortingPiston sortingPiston;
 		
 		sortingSystem <=> sorter.sorter;
-		sorter.positionSensors <=> positionSensor.iSensor;
-		
-		positionSensor.frontSensor <=> frontSensor.sensor;
-		positionSensor.backSensor <=> backSensor.sensor;
-		
+		sorter.diskSensor <=> diskSensor.sensor;
 		sorter.colorSensor <=> colorSensor.colorSensor;
 		sorter.beltMotor <=> beltMotor.motor;
 		sorter.sortingPiston <=> sortingPiston.piston;
@@ -53,51 +47,10 @@ component SortingSystem {
 component Sorter {
 	provides ISorter sorter;
 	
-	requires IBasicSensor positionSensors;	
+	requires IBasicSensor diskSensor;	
 	requires IColorSensor colorSensor;
 	requires IMotor beltMotor;
 	requires IPiston sortingPiston;
-}
-
-component PositionalSensors {
-	provides IBasicSensor iSensor;
-	
-	requires IBasicSensor frontSensor;
-	requires IBasicSensor backSensor;
-	
-	behaviour {
-		bool measuring = false;
-		bool frontSensorActive = false;
-		on iSensor.deactivate(): {
-			measuring = false;
-			frontSensorActive = false;
-			frontSensor.deactivate();
-			backSensor.deactivate();
-		}
-		
-		[!measuring] {
-			on iSensor.activate(): {
-				measuring = !measuring;
-				frontSensor.activate();
-				backSensor.activate();
-			}
-		}
-		[measuring] {
-			on iSensor.activate(): illegal;
-			[!frontSensorActive] {
-				on frontSensor.triggered(): {frontSensorActive = true;}
-				on backSensor.triggered(): {} // TODO: Make illegal in C++!!!
-			}
-			[frontSensorActive] {
-				//on frontSensor.triggered(): {} // TODO: Make illegal in C++???
-				on backSensor.triggered(): {
-					frontSensorActive = !frontSensorActive;
-					iSensor.triggered();
-					measuring = !measuring;
-				}
-			}
-		}
-	}
 }
 
 component DiskSensor {
