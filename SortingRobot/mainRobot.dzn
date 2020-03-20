@@ -1,4 +1,5 @@
 import sortingSystem.dzn;
+import IRobotCommunication.dzn;
 
 interface IRobot {
 	in void start();
@@ -20,24 +21,29 @@ interface IRobot {
 	}
 }
 
-component SortingRobotSystem {
+component Robot {
 	provides IRobot robot;
 	
 	system {
-		RaspberryPi sorter;
+		RaspberryPi controller;
+		CommunicationSystem communication;
+		SortingSystem sorter;
 		
-		robot <=> sorter.sorter;
+		robot <=> controller.sorter;
+		controller.communication <=> communication.communication;
+		controller.sorting <=> sorter.sortingSystem;
 	}
 }
 
 component RaspberryPi {
 	provides IRobot sorter;
 	
+	requires IRobotCommunication communication;
+	requires ISorter sorting;
 }
 
-// Awaiting Finalization of Communications System
 component CommunicationSystem {
-	
+	provides IRobotCommunication communication;
 }
 
 

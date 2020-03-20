@@ -1,0 +1,75 @@
+interface IRobotCommunication {
+	in void start();
+	in void stop();
+	in void emergencyStop();
+	out void emergency();
+	
+	out void requestDiskCounters();
+	in void respondDiskCounters();
+	
+	out void heartbeat();
+	in void heartbeat1();
+	in void heartbeat2();
+	in void heartbeat3();
+	in void heartbeat4();
+	
+	out void tookDisk_out();
+	in void tookDisk_in();
+	
+	out void error_out();
+	in void error_in();
+	
+	out void requestDisksTaken();
+	in void respondDisksTaken();
+	
+	behaviour {
+		enum State { Idle, Running };
+		State state = State.Idle;
+		
+		on respondDiskCounters,
+		   respondDisksTaken,
+		   error_in,
+		   heartbeat1,
+		   heartbeat2,
+		   heartbeat3,
+		   heartbeat4,
+		   tookDisk_in: {}
+		
+		[state.Idle] {
+			on start: state = State.Running;
+			on stop: illegal;
+			on emergencyStop: {}
+		}
+		
+		[state.Running] {
+			on stop, emergencyStop: state = State.Idle;
+			
+			on optional: {
+				state = State.Idle;
+				emergency;
+			}
+			
+			on optional: {
+				requestDiskCounters;
+			}
+			
+			on optional: {
+				requestDisksTaken;
+			}
+			
+			on optional: {
+				error_out;
+			}
+			
+			on optional: {
+				tookDisk_out;
+			}
+			
+			on optional: {
+				heartbeat;
+			}
+			
+			on start: illegal;
+		}
+	}
+}
