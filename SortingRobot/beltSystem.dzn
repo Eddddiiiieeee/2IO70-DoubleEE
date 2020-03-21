@@ -1,0 +1,48 @@
+import interfaces.dzn;
+import ITimer.dzn;
+
+interface IBelt {
+	in void start();
+	in void stop();
+	out void error();
+	
+	behaviour {
+		// TODO: Implement behaviour for interface
+	}
+}
+
+component Belt {
+	provides IBelt belt;
+	
+	system {
+		BeltController controller;
+		Motor motor;
+		Sensor sensor;
+		Timer timer;
+		
+		belt <=> controller.controller;
+		controller.motor <=> motor.motor;
+		controller.sensor <=> sensor.sensor;
+		controller.timer <=> timer.iTimer;
+	}
+}
+
+component BeltController {
+	provides IBelt controller;
+	
+	requires IMotor motor;
+	requires IBasicSensor sensor;
+	requires ITimer timer;
+	
+	behaviour {
+		// TODO: Implement behaviour for belt controller
+	}
+}
+
+component Motor {
+	provides IMotor motor;
+}
+
+component Sensor {
+	provides IBasicSensor sensor;
+}

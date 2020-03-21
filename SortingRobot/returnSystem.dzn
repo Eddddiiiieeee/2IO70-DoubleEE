@@ -1,3 +1,5 @@
+import interfaces.dzn;
+
 interface IReturning {
 	in void start();
 	in void stop();
@@ -6,10 +8,29 @@ interface IReturning {
 	enum State {Running, Stopped, ERROR};
 	
 	behaviour {
+		State state = State.Stopped;
 		
+		[state.Stopped] {
+			on start: {state = State.Running;}
+			on stop: illegal;
+		}
+		[state.Running] {
+			on start: illegal;
+			on stop: {state = State.Stopped;}
+			on optional: {error; state = State.ERROR;}
+		}
+		[state.ERROR] {
+			on start: illegal;
+			on stop: {state = State.Stopped;}
+		}
 	}
 }
 
 component ReturnSystem {
+	provides IReturning returnSystem;
 	
+	system {
+		
+	}
 }
+

@@ -65,6 +65,7 @@ component ColorSensor {
 	// Manual implementation in C++
 }
 
+// Replace with Belt System for error detection
 component BeltMotor {
 	provides IMotor motor;
 	
@@ -76,6 +77,7 @@ component BeltMotor {
 	}
 }
 
+// Replace with Blocking system for error detection.
 component SortingPiston {
 	provides IPiston piston;
 	

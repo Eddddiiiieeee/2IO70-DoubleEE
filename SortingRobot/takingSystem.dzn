@@ -36,21 +36,22 @@ component TakingSystem {
 		
 		takingSystem <=> taker.taker;
 		taker.diskDetector <=> detector.diskDetector;
-		taker.servo <=> blocker.servo;
+		taker.blockingPiston <=> blocker.piston;
 	}
 }
 
 component Taker {
 	provides ITaking taker;
 	
-	requires IMotor servo;
-	requires IBasicSensor diskDetector; // MAYBE COMMUNICATION FROM FACTORY?
+	requires IPiston blockingPiston;
+	requires IBasicSensor diskDetector;
 }
 
 component DiskDetector {
 	provides IBasicSensor diskDetector;
 }
 
+// Replace with blocking system for error detection
 component Blocker {
-	provides IMotor servo;
+	provides IPiston piston;
 }

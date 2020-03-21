@@ -1,0 +1,48 @@
+import interfaces.dzn;
+import ITimer.dzn;
+
+interface IBlocker {
+	in void start();
+	in void stop();
+	out void error();
+	
+	behaviour {
+		// TODO: Implement behaviour for interface
+	}
+}
+
+component Blocker {
+	provides IBlocker blocker;
+	
+	system {
+		BlockerController controller;
+		Piston piston;
+		Sensor sensor;
+		Timer timer;
+		
+		blocker <=> controller.controller;
+		controller.piston <=> piston.piston;
+		controller.sensor <=> sensor.sensor;
+		controller.timer <=> timer.iTimer;
+	}
+}
+
+component BlockerController {
+	provides IBlocker controller;
+	
+	requires IPiston piston;
+	requires IBasicSensor sensor;
+	requires ITimer timer;
+	
+	behaviour {
+		// TODO: Implement behaviour for Blocker controller
+	}
+}
+
+component Piston {
+	provides IPiston piston;
+}
+
+component Sensor {
+	provides IBasicSensor sensor;
+}
