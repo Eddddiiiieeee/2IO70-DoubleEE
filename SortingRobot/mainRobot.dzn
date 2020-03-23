@@ -45,8 +45,3 @@ component RaspberryPi {
 	requires ISorter sorting;
 	requires ITaking taker;
 }
-
-
-
-
-

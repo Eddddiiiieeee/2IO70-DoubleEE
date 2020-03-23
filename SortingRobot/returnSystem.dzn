@@ -1,6 +1,6 @@
 import interfaces.dzn;
 
-interface IReturning {
+interface IReturner {
 	in void start();
 	in void stop();
 	out void error();
@@ -26,11 +26,36 @@ interface IReturning {
 	}
 }
 
-component ReturnSystem {
-	provides IReturning returnSystem;
+component ReturningSystem {
+	provides IReturner returningSystem;
 	
 	system {
+		Returner returner;
+		DiskSensor diskSensor;
+		BeltMotor beltMotor1;
+		BeltMotor beltMotor2;
 		
+		returningSystem <=> returner.returner;
+		returner.diskSensor <=> diskSensor.sensor;
+		returner.beltMotor1 <=> beltMotor1.motor;
+		returner.beltMotor2 <=> beltMotor2.motor;
 	}
 }
 
+component Returner {
+	provides IReturner returner;
+	
+	requires IBasicSensor diskSensor;
+	requires IMotor beltMotor1;
+	requires IMotor beltMotor2;
+}
+
+component DiskSensor {
+	provides IBasicSensor sensor;
+	
+	// Manual implementation in C++
+}
+
+component BeltMotor {
+	provides IMotor motor;
+}

@@ -16,8 +16,8 @@ interface ITimer {
       on start: illegal;
       on cancel: state = State.Idle;
       on inevitable: { // ALWAYS happens eventually unless cancelled first
-      state = State.Idle;
-      timeout;
+      	state = State.Idle;
+      	timeout;
       }
     }
   }

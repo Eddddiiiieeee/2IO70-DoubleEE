@@ -42,15 +42,22 @@ interface IColorSensor {
 
 
 interface IMotor {
-	enum State {Running, Idle};
+	enum State {Idle, Running};
 	in void start();
 	in void stop();
 	
 	behaviour {
 		State state = State.Idle;
 		
-		on start: {state = State.Running;}
-		on stop: {state = State.Idle;}
+		[state.Idle] {
+			on start: {state = State.Running;}
+			on stop: illegal;
+		}
+		
+		[state.Running] {
+			on start: illegal;
+			on stop: {state = State.Idle;}
+		}
 	}
 }
 
