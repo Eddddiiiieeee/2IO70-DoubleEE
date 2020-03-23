@@ -7,7 +7,19 @@ interface IBelt {
 	out void error();
 	
 	behaviour {
-		// TODO: Implement behaviour for interface
+		enum State {Idle, Running};
+		State state = State.Idle;
+		
+		[state.Idle] {
+			on start: state = State.Running;
+			on stop: illegal;
+		}
+		
+		[state.Running] {
+			on start: illegal;
+			on stop: state = State.Idle;
+			on optional: error;
+		}
 	}
 }
 
@@ -35,14 +47,59 @@ component BeltController {
 	requires ITimer timer;
 	
 	behaviour {
-		// TODO: Implement behaviour for belt controller
+		enum State {Idle, Running, Error};
+		State state = State.Idle;
+		
+		[state.Idle] {
+			on controller.start(): {
+				motor.start();
+				timer.start($10000$);
+				state = State.Running;
+			}
+		}
+		
+		[state.Running] {
+			on controller.stop(): {
+				motor.stop();
+				timer.cancel();
+				state = State.Idle;
+			}
+			
+			on timer.timeout(): {
+				state = State.Error;
+				controller.error();
+				motor.stop();
+			}
+		}
+		
+		[state.Error] {
+			on controller.stop(): {
+				//motor.stop();
+				state = State.Idle;
+			}
+		}
 	}
 }
 
 component Motor {
 	provides IMotor motor;
+	
+	behaviour {
+		enum State {Idle, Running};
+		State state = State.Idle;
+		
+		[state.Idle] {
+			on motor.start(): state = State.Running;
+		}
+		
+		[state.Running] {
+			on motor.stop(): state = State.Idle;
+		}
+	}
 }
 
 component Sensor {
 	provides IBasicSensor sensor;
+	
+	// Manual implementation in C++
 }

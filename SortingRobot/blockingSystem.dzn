@@ -7,7 +7,19 @@ interface IBlocker {
 	out void error();
 	
 	behaviour {
-		// TODO: Implement behaviour for interface
+		enum State {Retracted, Extended};
+		State state = State.Retracted;
+		
+		[state.Retracted] {
+			on start: state = State.Extended;
+			on stop: illegal;
+		}
+		
+		[state.Extended] {
+			on start: illegal;
+			on stop: state = State.Retracted;
+			on optional: error;
+		}
 	}
 }
 
@@ -35,7 +47,37 @@ component BlockerController {
 	requires ITimer timer;
 	
 	behaviour {
-		// TODO: Implement behaviour for Blocker controller
+		enum State {Retracted, Extended, Error};
+		State state = State.Retracted;
+		
+		[state.Retracted] {
+			on controller.start(): {
+				piston.extend();
+				timer.start($10000$);
+				state = State.Extended;
+			}
+		}
+		
+		[state.Extended] {
+			on controller.stop(): {
+				piston.retract();
+				timer.cancel();
+				state = State.Retracted;
+			}
+			
+			on timer.timeout(): {
+				state = State.Error;
+				controller.error();
+				piston.retract();
+			}
+		}
+		
+		[state.Error] {
+			on controller.stop(): {
+				//piston.retract();
+				state = State.Retracted;
+			}
+		}
 	}
 }
 
