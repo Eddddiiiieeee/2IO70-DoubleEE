@@ -79,3 +79,14 @@ interface IPiston {
 		}
 	}
 }
+
+
+component Button {
+	provides IBasicSensor sensor;
+	// Manual implementation in C++
+}
+
+component DiskDetector {
+	provides IBasicSensor sensor;
+	// Manual implementation in C++
+}

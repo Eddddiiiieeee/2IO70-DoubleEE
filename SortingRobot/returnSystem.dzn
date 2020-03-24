@@ -1,4 +1,5 @@
 import interfaces.dzn;
+import beltSystem.dzn;
 
 interface IReturner {
 	in void start();
@@ -31,31 +32,18 @@ component ReturningSystem {
 	
 	system {
 		Returner returner;
-		DiskSensor diskSensor;
-		BeltMotor beltMotor1;
-		BeltMotor beltMotor2;
+		DiskDetector sensor;
+		Belt belt;
 		
 		returningSystem <=> returner.returner;
-		returner.diskSensor <=> diskSensor.sensor;
-		returner.beltMotor1 <=> beltMotor1.motor;
-		returner.beltMotor2 <=> beltMotor2.motor;
+		returner.diskDetector <=> sensor.sensor;
+		returner.belt <=> belt.belt;
 	}
 }
 
 component Returner {
 	provides IReturner returner;
 	
-	requires IBasicSensor diskSensor;
-	requires IMotor beltMotor1;
-	requires IMotor beltMotor2;
-}
-
-component DiskSensor {
-	provides IBasicSensor sensor;
-	
-	// Manual implementation in C++
-}
-
-component BeltMotor {
-	provides IMotor motor;
+	requires IBasicSensor diskDetector;
+	requires IBelt belt;
 }

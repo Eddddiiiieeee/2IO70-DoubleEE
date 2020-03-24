@@ -24,27 +24,27 @@ namespace dzn {
 
 
 /********************************** INTERFACE *********************************/
-#ifndef ISORTER_HH
-#define ISORTER_HH
+#ifndef IBELT_HH
+#define IBELT_HH
 
 
 
-struct ISorter
+struct IBelt
 {
-#ifndef ENUM_ISorter_State
-#define ENUM_ISorter_State 1
+#ifndef ENUM_IBelt_State
+#define ENUM_IBelt_State 1
 
 
   struct State
   {
     enum type
     {
-      Running,Stopped,Error
+      Idle,Running
     };
   };
 
 
-#endif // ENUM_ISorter_State
+#endif // ENUM_IBelt_State
 
   struct
   {
@@ -58,7 +58,7 @@ struct ISorter
   } out;
 
   dzn::port::meta meta;
-  inline ISorter(const dzn::port::meta& m) : meta(m) {}
+  inline IBelt(const dzn::port::meta& m) : meta(m) {}
 
   void check_bindings() const
   {
@@ -70,7 +70,7 @@ struct ISorter
   }
 };
 
-inline void connect (ISorter& provided, ISorter& required)
+inline void connect (IBelt& provided, IBelt& required)
 {
   provided.out = required.out;
   required.in = provided.in;
@@ -79,36 +79,34 @@ inline void connect (ISorter& provided, ISorter& required)
 }
 
 
-#ifndef ENUM_TO_STRING_ISorter_State
-#define ENUM_TO_STRING_ISorter_State 1
-inline std::string to_string(::ISorter::State::type v)
+#ifndef ENUM_TO_STRING_IBelt_State
+#define ENUM_TO_STRING_IBelt_State 1
+inline std::string to_string(::IBelt::State::type v)
 {
   switch(v)
   {
-    case ::ISorter::State::Running: return "State_Running";
-    case ::ISorter::State::Stopped: return "State_Stopped";
-    case ::ISorter::State::Error: return "State_Error";
+    case ::IBelt::State::Idle: return "State_Idle";
+    case ::IBelt::State::Running: return "State_Running";
 
   }
   return "";
 }
-#endif // ENUM_TO_STRING_ISorter_State
+#endif // ENUM_TO_STRING_IBelt_State
 
-#ifndef STRING_TO_ENUM_ISorter_State
-#define STRING_TO_ENUM_ISorter_State 1
-inline ::ISorter::State::type to_ISorter_State(std::string s)
+#ifndef STRING_TO_ENUM_IBelt_State
+#define STRING_TO_ENUM_IBelt_State 1
+inline ::IBelt::State::type to_IBelt_State(std::string s)
 {
-  static std::map<std::string, ::ISorter::State::type> m = {
-    {"State_Running", ::ISorter::State::Running},
-    {"State_Stopped", ::ISorter::State::Stopped},
-    {"State_Error", ::ISorter::State::Error},
+  static std::map<std::string, ::IBelt::State::type> m = {
+    {"State_Idle", ::IBelt::State::Idle},
+    {"State_Running", ::IBelt::State::Running},
   };
   return m.at(s);
 }
-#endif // STRING_TO_ENUM_ISorter_State
+#endif // STRING_TO_ENUM_IBelt_State
 
 
-#endif // ISORTER_HH
+#endif // IBELT_HH
 
 /********************************** INTERFACE *********************************/
 /***********************************  FOREIGN  **********************************/
@@ -271,153 +269,152 @@ namespace skel {
 
 /***********************************  FOREIGN  **********************************/
 /********************************** COMPONENT *********************************/
-#ifndef SORTER_HH
-#define SORTER_HH
+#ifndef BELTCONTROLLER_HH
+#define BELTCONTROLLER_HH
 
 #include "interfaces.hh"
 #include "interfaces.hh"
-#include "beltSystem.hh"
-#include "blockingSystem.hh"
 #include "ITimer.hh"
 
 
 
-struct Sorter
+struct BeltController
 {
   dzn::meta dzn_meta;
   dzn::runtime& dzn_rt;
   dzn::locator const& dzn_locator;
-
-  unsigned int extendTime;
-  unsigned int timeoutTime;
-  unsigned int diskScanInterval;
-  ::ISorter::State::type state;
+#ifndef ENUM_BeltController_State
+#define ENUM_BeltController_State 1
 
 
-  std::function<void ()> out_sorter;
-
-  ::ISorter sorter;
-
-  ::IBasicSensor diskDetector;
-  ::IColorSensor colorSensor;
-  ::IBelt belt;
-  ::IBlocker blocker;
-  ::ITimer colorTimer;
+  struct State
+  {
+    enum type
+    {
+      Idle,Running,Error
+    };
+  };
 
 
-  Sorter(const dzn::locator&);
+#endif // ENUM_BeltController_State
+
+  unsigned int interval;
+  ::BeltController::State::type state;
+
+
+  std::function<void ()> out_controller;
+
+  ::IBelt controller;
+
+  ::IMotor motor;
+  ::IBasicSensor sensor;
+  ::ITimer timer;
+
+
+  BeltController(const dzn::locator&);
   void check_bindings() const;
   void dump_tree(std::ostream& os) const;
-  friend std::ostream& operator << (std::ostream& os, const Sorter& m)  {
+  friend std::ostream& operator << (std::ostream& os, const BeltController& m)  {
     (void)m;
-    return os << "[" << m.extendTime <<", " << m.timeoutTime <<", " << m.diskScanInterval <<", " << m.state <<"]" ;
+    return os << "[" << m.interval <<", " << m.state <<"]" ;
   }
   private:
-  void sorter_start();
-  void sorter_stop();
-  void diskDetector_triggered();
-  void colorSensor_lightDisk();
-  void colorSensor_darkDisk();
-  void belt_error();
-  void blocker_error();
-  void colorTimer_timeout();
+  void controller_start();
+  void controller_stop();
+  void sensor_triggered();
+  void timer_timeout();
 
 };
 
-#endif // SORTER_HH
+#endif // BELTCONTROLLER_HH
 
 /********************************** COMPONENT *********************************/
-/***********************************  FOREIGN  **********************************/
-#ifndef SKEL_COLORSENSOR_HH
-#define SKEL_COLORSENSOR_HH
-
-#include <dzn/locator.hh>
-#include <dzn/runtime.hh>
+/********************************** COMPONENT *********************************/
+#ifndef MOTOR_HH
+#define MOTOR_HH
 
 #include "interfaces.hh"
 
 
 
-namespace skel {
-  struct ColorSensor
+struct Motor
+{
+  dzn::meta dzn_meta;
+  dzn::runtime& dzn_rt;
+  dzn::locator const& dzn_locator;
+#ifndef ENUM_Motor_State
+#define ENUM_Motor_State 1
+
+
+  struct State
   {
-    dzn::meta dzn_meta;
-    dzn::runtime& dzn_rt;
-    dzn::locator const& dzn_locator;
-    ::IColorSensor colorSensor;
-
-
-    ColorSensor(const dzn::locator& dzn_locator)
-    : dzn_meta{"","ColorSensor",0,0,{},{},{[this]{colorSensor.check_bindings();}}}
-    , dzn_rt(dzn_locator.get<dzn::runtime>())
-    , dzn_locator(dzn_locator)
-
-    , colorSensor({{"colorSensor",this,&dzn_meta},{"",0,0}})
-
-
+    enum type
     {
-      colorSensor.in.activate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->colorSensor) = false; return colorSensor_activate();}, this->colorSensor.meta, "activate");};
-      colorSensor.in.deactivate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->colorSensor) = false; return colorSensor_deactivate();}, this->colorSensor.meta, "deactivate");};
-
-
-    }
-    virtual ~ ColorSensor() {}
-    virtual std::ostream& stream_members(std::ostream& os) const { return os; }
-    void check_bindings() const;
-    void dump_tree(std::ostream& os) const;
-    void set_state(std::map<std::string,std::map<std::string,std::string> >){}
-    void set_state(std::map<std::string,std::string>_alist){}
-    friend std::ostream& operator << (std::ostream& os, const ColorSensor& m)  {
-      return m.stream_members(os);
-    }
-    private:
-    virtual void colorSensor_activate () = 0;
-    virtual void colorSensor_deactivate () = 0;
-
+      Idle,Running
+    };
   };
-}
 
-#endif // COLORSENSOR_HH
 
-/***********************************  FOREIGN  **********************************/
+#endif // ENUM_Motor_State
+
+  ::Motor::State::type state;
+
+
+  std::function<void ()> out_motor;
+
+  ::IMotor motor;
+
+
+
+  Motor(const dzn::locator&);
+  void check_bindings() const;
+  void dump_tree(std::ostream& os) const;
+  friend std::ostream& operator << (std::ostream& os, const Motor& m)  {
+    (void)m;
+    return os << "[" << m.state <<"]" ;
+  }
+  private:
+  void motor_start();
+  void motor_stop();
+
+};
+
+#endif // MOTOR_HH
+
+/********************************** COMPONENT *********************************/
 /***********************************  SYSTEM  ***********************************/
-#ifndef SORTINGSYSTEM_HH
-#define SORTINGSYSTEM_HH
+#ifndef BELT_HH
+#define BELT_HH
 
 
 #include <dzn/locator.hh>
 
-#include "DiskDetector.hh"
-#include "ColorSensor.hh"
-#include "beltSystem.hh"
-#include "blockingSystem.hh"
+#include "Button.hh"
 #include "Timer.hh"
 
 
 
-struct SortingSystem
+struct Belt
 {
   dzn::meta dzn_meta;
   dzn::runtime& dzn_rt;
   dzn::locator const& dzn_locator;
 
 
-  ::Sorter sorter;
-  ::DiskDetector diskDetector;
-  ::ColorSensor colorSensor;
-  ::Belt belt;
-  ::Blocker blocker;
+  ::BeltController controller;
+  ::Motor motor;
+  ::Button button;
   ::Timer timer;
 
-  ::ISorter& sortingSystem;
+  ::IBelt& belt;
 
 
-  SortingSystem(const dzn::locator&);
+  Belt(const dzn::locator&);
   void check_bindings() const;
   void dump_tree(std::ostream& os=std::clog) const;
 };
 
-#endif // SORTINGSYSTEM_HH
+#endif // BELT_HH
 
 /***********************************  SYSTEM  ***********************************/
 

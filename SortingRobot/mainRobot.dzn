@@ -1,21 +1,26 @@
 import sortingSystem.dzn;
 import takingSystem.dzn;
+import returnSystem.dzn;
 import IRobotCommunication.dzn;
 
 interface IRobot {
 	in void start();
 	in void stop();
 	
-	enum State {On, Off};
+	enum State {Off, Idle, Running};
 	
 	behaviour {
 		State state = State.Off;
 		
 		[state.Off] {
-			on start: {state = State.On;}
+			on start: {state = State.Idle;}
 			on stop: {}
 		}
-		[state.On] {
+		[state.Idle] {
+			on start: {}
+			on stop: {state = State.Off;}
+		}
+		[state.Running] {
 			on start: {}
 			on stop: {state = State.Off;}
 		}
@@ -30,11 +35,13 @@ component Robot {
 		CommunicationSystem communication;
 		SortingSystem sorter;
 		TakingSystem taker;
+		ReturningSystem returner;
 		
 		robot <=> controller.controller;
 		controller.communication <=> communication.communication;
 		controller.sorting <=> sorter.sortingSystem;
 		controller.taker <=> taker.takingSystem;
+		controller.returner <=> returner.returningSystem;
 	}
 }
 
@@ -44,4 +51,23 @@ component RaspberryPi {
 	requires IRobotCommunication communication;
 	requires ISorter sorting;
 	requires ITaking taker;
+	requires IReturner returner;
+	
+	behaviour {
+		IRobot.State state = IRobot.State.Off;
+		
+		[state.Off] {
+			on controller.start(): {
+				state = IRobot.State.Idle;
+			}
+			on controller.stop(): {}
+		}
+		[state.Idle] {
+			
+			on controller.start(): {}
+		}
+		[state.Running] {
+			
+		}
+	}
 }

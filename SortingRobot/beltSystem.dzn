@@ -29,12 +29,12 @@ component Belt {
 	system {
 		BeltController controller;
 		Motor motor;
-		Sensor sensor;
+		Button button;
 		Timer timer;
 		
 		belt <=> controller.controller;
 		controller.motor <=> motor.motor;
-		controller.sensor <=> sensor.sensor;
+		controller.sensor <=> button.sensor;
 		controller.timer <=> timer.iTimer;
 	}
 }
@@ -48,14 +48,18 @@ component BeltController {
 	
 	behaviour {
 		enum State {Idle, Running, Error};
+		ITimer.unsigned_integer interval = $10000$;
 		State state = State.Idle;
 		
 		[state.Idle] {
 			on controller.start(): {
 				motor.start();
-				timer.start($10000$);
+				timer.start(interval);
 				state = State.Running;
 			}
+			// TODO: Consider if illegal statement:
+			on sensor.triggered(): {} // Illegal? since motor does not stop?
+			on controller.stop(): illegal;
 		}
 		
 		[state.Running] {
@@ -65,11 +69,18 @@ component BeltController {
 				state = State.Idle;
 			}
 			
+			on sensor.triggered(): {
+				timer.cancel();
+				timer.start(interval);
+			}
+			
 			on timer.timeout(): {
 				state = State.Error;
 				controller.error();
 				motor.stop();
 			}
+			
+			on controller.start(): illegal;
 		}
 		
 		[state.Error] {
@@ -96,10 +107,4 @@ component Motor {
 			on motor.stop(): state = State.Idle;
 		}
 	}
-}
-
-component Sensor {
-	provides IBasicSensor sensor;
-	
-	// Manual implementation in C++
 }

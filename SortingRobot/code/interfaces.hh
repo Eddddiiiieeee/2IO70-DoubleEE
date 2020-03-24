@@ -137,7 +137,7 @@ struct IMotor
   {
     enum type
     {
-      Running,Idle
+      Idle,Running
     };
   };
 
@@ -181,8 +181,8 @@ inline std::string to_string(::IMotor::State::type v)
 {
   switch(v)
   {
-    case ::IMotor::State::Running: return "State_Running";
     case ::IMotor::State::Idle: return "State_Idle";
+    case ::IMotor::State::Running: return "State_Running";
 
   }
   return "";
@@ -194,8 +194,8 @@ inline std::string to_string(::IMotor::State::type v)
 inline ::IMotor::State::type to_IMotor_State(std::string s)
 {
   static std::map<std::string, ::IMotor::State::type> m = {
-    {"State_Running", ::IMotor::State::Running},
     {"State_Idle", ::IMotor::State::Idle},
+    {"State_Running", ::IMotor::State::Running},
   };
   return m.at(s);
 }
@@ -289,6 +289,110 @@ inline ::IPiston::State::type to_IPiston_State(std::string s)
 #endif // IPISTON_HH
 
 /********************************** INTERFACE *********************************/
+/***********************************  FOREIGN  **********************************/
+#ifndef SKEL_BUTTON_HH
+#define SKEL_BUTTON_HH
+
+#include <dzn/locator.hh>
+#include <dzn/runtime.hh>
+
+
+
+
+namespace skel {
+  struct Button
+  {
+    dzn::meta dzn_meta;
+    dzn::runtime& dzn_rt;
+    dzn::locator const& dzn_locator;
+    ::IBasicSensor sensor;
+
+
+    Button(const dzn::locator& dzn_locator)
+    : dzn_meta{"","Button",0,0,{},{},{[this]{sensor.check_bindings();}}}
+    , dzn_rt(dzn_locator.get<dzn::runtime>())
+    , dzn_locator(dzn_locator)
+
+    , sensor({{"sensor",this,&dzn_meta},{"",0,0}})
+
+
+    {
+      sensor.in.activate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->sensor) = false; return sensor_activate();}, this->sensor.meta, "activate");};
+      sensor.in.deactivate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->sensor) = false; return sensor_deactivate();}, this->sensor.meta, "deactivate");};
+
+
+    }
+    virtual ~ Button() {}
+    virtual std::ostream& stream_members(std::ostream& os) const { return os; }
+    void check_bindings() const;
+    void dump_tree(std::ostream& os) const;
+    void set_state(std::map<std::string,std::map<std::string,std::string> >){}
+    void set_state(std::map<std::string,std::string>_alist){}
+    friend std::ostream& operator << (std::ostream& os, const Button& m)  {
+      return m.stream_members(os);
+    }
+    private:
+    virtual void sensor_activate () = 0;
+    virtual void sensor_deactivate () = 0;
+
+  };
+}
+
+#endif // BUTTON_HH
+
+/***********************************  FOREIGN  **********************************/
+/***********************************  FOREIGN  **********************************/
+#ifndef SKEL_DISKDETECTOR_HH
+#define SKEL_DISKDETECTOR_HH
+
+#include <dzn/locator.hh>
+#include <dzn/runtime.hh>
+
+
+
+
+namespace skel {
+  struct DiskDetector
+  {
+    dzn::meta dzn_meta;
+    dzn::runtime& dzn_rt;
+    dzn::locator const& dzn_locator;
+    ::IBasicSensor sensor;
+
+
+    DiskDetector(const dzn::locator& dzn_locator)
+    : dzn_meta{"","DiskDetector",0,0,{},{},{[this]{sensor.check_bindings();}}}
+    , dzn_rt(dzn_locator.get<dzn::runtime>())
+    , dzn_locator(dzn_locator)
+
+    , sensor({{"sensor",this,&dzn_meta},{"",0,0}})
+
+
+    {
+      sensor.in.activate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->sensor) = false; return sensor_activate();}, this->sensor.meta, "activate");};
+      sensor.in.deactivate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->sensor) = false; return sensor_deactivate();}, this->sensor.meta, "deactivate");};
+
+
+    }
+    virtual ~ DiskDetector() {}
+    virtual std::ostream& stream_members(std::ostream& os) const { return os; }
+    void check_bindings() const;
+    void dump_tree(std::ostream& os) const;
+    void set_state(std::map<std::string,std::map<std::string,std::string> >){}
+    void set_state(std::map<std::string,std::string>_alist){}
+    friend std::ostream& operator << (std::ostream& os, const DiskDetector& m)  {
+      return m.stream_members(os);
+    }
+    private:
+    virtual void sensor_activate () = 0;
+    virtual void sensor_deactivate () = 0;
+
+  };
+}
+
+#endif // DISKDETECTOR_HH
+
+/***********************************  FOREIGN  **********************************/
 
 
 //version: 2.9.1

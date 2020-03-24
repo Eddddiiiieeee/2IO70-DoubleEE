@@ -24,31 +24,31 @@ namespace dzn {
 
 
 /********************************** INTERFACE *********************************/
-#ifndef ISORTER_HH
-#define ISORTER_HH
+#ifndef IBLOCKER_HH
+#define IBLOCKER_HH
 
 
 
-struct ISorter
+struct IBlocker
 {
-#ifndef ENUM_ISorter_State
-#define ENUM_ISorter_State 1
+#ifndef ENUM_IBlocker_State
+#define ENUM_IBlocker_State 1
 
 
   struct State
   {
     enum type
     {
-      Running,Stopped,Error
+      Retracted,Extended,Error
     };
   };
 
 
-#endif // ENUM_ISorter_State
+#endif // ENUM_IBlocker_State
 
   struct
   {
-    std::function< void()> start;
+    std::function< void(unsigned int,unsigned int)> trigger;
     std::function< void()> stop;
   } in;
 
@@ -58,11 +58,11 @@ struct ISorter
   } out;
 
   dzn::port::meta meta;
-  inline ISorter(const dzn::port::meta& m) : meta(m) {}
+  inline IBlocker(const dzn::port::meta& m) : meta(m) {}
 
   void check_bindings() const
   {
-    if (! in.start) throw dzn::binding_error(meta, "in.start");
+    if (! in.trigger) throw dzn::binding_error(meta, "in.trigger");
     if (! in.stop) throw dzn::binding_error(meta, "in.stop");
 
     if (! out.error) throw dzn::binding_error(meta, "out.error");
@@ -70,7 +70,7 @@ struct ISorter
   }
 };
 
-inline void connect (ISorter& provided, ISorter& required)
+inline void connect (IBlocker& provided, IBlocker& required)
 {
   provided.out = required.out;
   required.in = provided.in;
@@ -79,36 +79,36 @@ inline void connect (ISorter& provided, ISorter& required)
 }
 
 
-#ifndef ENUM_TO_STRING_ISorter_State
-#define ENUM_TO_STRING_ISorter_State 1
-inline std::string to_string(::ISorter::State::type v)
+#ifndef ENUM_TO_STRING_IBlocker_State
+#define ENUM_TO_STRING_IBlocker_State 1
+inline std::string to_string(::IBlocker::State::type v)
 {
   switch(v)
   {
-    case ::ISorter::State::Running: return "State_Running";
-    case ::ISorter::State::Stopped: return "State_Stopped";
-    case ::ISorter::State::Error: return "State_Error";
+    case ::IBlocker::State::Retracted: return "State_Retracted";
+    case ::IBlocker::State::Extended: return "State_Extended";
+    case ::IBlocker::State::Error: return "State_Error";
 
   }
   return "";
 }
-#endif // ENUM_TO_STRING_ISorter_State
+#endif // ENUM_TO_STRING_IBlocker_State
 
-#ifndef STRING_TO_ENUM_ISorter_State
-#define STRING_TO_ENUM_ISorter_State 1
-inline ::ISorter::State::type to_ISorter_State(std::string s)
+#ifndef STRING_TO_ENUM_IBlocker_State
+#define STRING_TO_ENUM_IBlocker_State 1
+inline ::IBlocker::State::type to_IBlocker_State(std::string s)
 {
-  static std::map<std::string, ::ISorter::State::type> m = {
-    {"State_Running", ::ISorter::State::Running},
-    {"State_Stopped", ::ISorter::State::Stopped},
-    {"State_Error", ::ISorter::State::Error},
+  static std::map<std::string, ::IBlocker::State::type> m = {
+    {"State_Retracted", ::IBlocker::State::Retracted},
+    {"State_Extended", ::IBlocker::State::Extended},
+    {"State_Error", ::IBlocker::State::Error},
   };
   return m.at(s);
 }
-#endif // STRING_TO_ENUM_ISorter_State
+#endif // STRING_TO_ENUM_IBlocker_State
 
 
-#endif // ISORTER_HH
+#endif // IBLOCKER_HH
 
 /********************************** INTERFACE *********************************/
 /***********************************  FOREIGN  **********************************/
@@ -271,153 +271,143 @@ namespace skel {
 
 /***********************************  FOREIGN  **********************************/
 /********************************** COMPONENT *********************************/
-#ifndef SORTER_HH
-#define SORTER_HH
+#ifndef BLOCKERCONTROLLER_HH
+#define BLOCKERCONTROLLER_HH
 
 #include "interfaces.hh"
 #include "interfaces.hh"
-#include "beltSystem.hh"
-#include "blockingSystem.hh"
+#include "ITimer.hh"
 #include "ITimer.hh"
 
 
 
-struct Sorter
+struct BlockerController
 {
   dzn::meta dzn_meta;
   dzn::runtime& dzn_rt;
   dzn::locator const& dzn_locator;
-
-  unsigned int extendTime;
-  unsigned int timeoutTime;
-  unsigned int diskScanInterval;
-  ::ISorter::State::type state;
+#ifndef ENUM_BlockerController_State
+#define ENUM_BlockerController_State 1
 
 
-  std::function<void ()> out_sorter;
-
-  ::ISorter sorter;
-
-  ::IBasicSensor diskDetector;
-  ::IColorSensor colorSensor;
-  ::IBelt belt;
-  ::IBlocker blocker;
-  ::ITimer colorTimer;
+  struct State
+  {
+    enum type
+    {
+      Retracted,Extended,Error
+    };
+  };
 
 
-  Sorter(const dzn::locator&);
+#endif // ENUM_BlockerController_State
+
+  bool pistonExtended;
+  ::BlockerController::State::type state;
+
+
+  std::function<void ()> out_controller;
+
+  ::IBlocker controller;
+
+  ::IPiston piston;
+  ::IBasicSensor sensor;
+  ::ITimer pistonTimer;
+  ::ITimer timeout;
+
+
+  BlockerController(const dzn::locator&);
   void check_bindings() const;
   void dump_tree(std::ostream& os) const;
-  friend std::ostream& operator << (std::ostream& os, const Sorter& m)  {
+  friend std::ostream& operator << (std::ostream& os, const BlockerController& m)  {
     (void)m;
-    return os << "[" << m.extendTime <<", " << m.timeoutTime <<", " << m.diskScanInterval <<", " << m.state <<"]" ;
+    return os << "[" << m.pistonExtended <<", " << m.state <<"]" ;
   }
   private:
-  void sorter_start();
-  void sorter_stop();
-  void diskDetector_triggered();
-  void colorSensor_lightDisk();
-  void colorSensor_darkDisk();
-  void belt_error();
-  void blocker_error();
-  void colorTimer_timeout();
+  void controller_trigger(unsigned int extendTime,unsigned int timeoutTime);
+  void controller_stop();
+  void sensor_triggered();
+  void pistonTimer_timeout();
+  void timeout_timeout();
 
 };
 
-#endif // SORTER_HH
+#endif // BLOCKERCONTROLLER_HH
 
 /********************************** COMPONENT *********************************/
-/***********************************  FOREIGN  **********************************/
-#ifndef SKEL_COLORSENSOR_HH
-#define SKEL_COLORSENSOR_HH
-
-#include <dzn/locator.hh>
-#include <dzn/runtime.hh>
+/********************************** COMPONENT *********************************/
+#ifndef PISTON_HH
+#define PISTON_HH
 
 #include "interfaces.hh"
 
 
 
-namespace skel {
-  struct ColorSensor
-  {
-    dzn::meta dzn_meta;
-    dzn::runtime& dzn_rt;
-    dzn::locator const& dzn_locator;
-    ::IColorSensor colorSensor;
+struct Piston
+{
+  dzn::meta dzn_meta;
+  dzn::runtime& dzn_rt;
+  dzn::locator const& dzn_locator;
+
+  ::IPiston::State::type state;
 
 
-    ColorSensor(const dzn::locator& dzn_locator)
-    : dzn_meta{"","ColorSensor",0,0,{},{},{[this]{colorSensor.check_bindings();}}}
-    , dzn_rt(dzn_locator.get<dzn::runtime>())
-    , dzn_locator(dzn_locator)
+  std::function<void ()> out_piston;
 
-    , colorSensor({{"colorSensor",this,&dzn_meta},{"",0,0}})
+  ::IPiston piston;
 
 
-    {
-      colorSensor.in.activate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->colorSensor) = false; return colorSensor_activate();}, this->colorSensor.meta, "activate");};
-      colorSensor.in.deactivate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->colorSensor) = false; return colorSensor_deactivate();}, this->colorSensor.meta, "deactivate");};
 
+  Piston(const dzn::locator&);
+  void check_bindings() const;
+  void dump_tree(std::ostream& os) const;
+  friend std::ostream& operator << (std::ostream& os, const Piston& m)  {
+    (void)m;
+    return os << "[" << m.state <<"]" ;
+  }
+  private:
+  void piston_extend();
+  void piston_retract();
 
-    }
-    virtual ~ ColorSensor() {}
-    virtual std::ostream& stream_members(std::ostream& os) const { return os; }
-    void check_bindings() const;
-    void dump_tree(std::ostream& os) const;
-    void set_state(std::map<std::string,std::map<std::string,std::string> >){}
-    void set_state(std::map<std::string,std::string>_alist){}
-    friend std::ostream& operator << (std::ostream& os, const ColorSensor& m)  {
-      return m.stream_members(os);
-    }
-    private:
-    virtual void colorSensor_activate () = 0;
-    virtual void colorSensor_deactivate () = 0;
+};
 
-  };
-}
+#endif // PISTON_HH
 
-#endif // COLORSENSOR_HH
-
-/***********************************  FOREIGN  **********************************/
+/********************************** COMPONENT *********************************/
 /***********************************  SYSTEM  ***********************************/
-#ifndef SORTINGSYSTEM_HH
-#define SORTINGSYSTEM_HH
+#ifndef BLOCKER_HH
+#define BLOCKER_HH
 
 
 #include <dzn/locator.hh>
 
-#include "DiskDetector.hh"
-#include "ColorSensor.hh"
-#include "beltSystem.hh"
-#include "blockingSystem.hh"
+#include "Button.hh"
+#include "Timer.hh"
 #include "Timer.hh"
 
 
 
-struct SortingSystem
+struct Blocker
 {
   dzn::meta dzn_meta;
   dzn::runtime& dzn_rt;
   dzn::locator const& dzn_locator;
 
 
-  ::Sorter sorter;
-  ::DiskDetector diskDetector;
-  ::ColorSensor colorSensor;
-  ::Belt belt;
-  ::Blocker blocker;
-  ::Timer timer;
+  ::BlockerController controller;
+  ::Piston piston;
+  ::Button button;
+  ::Timer pistonTimer;
+  ::Timer timeoutTimer;
 
-  ::ISorter& sortingSystem;
+  ::IBlocker& blocker;
 
 
-  SortingSystem(const dzn::locator&);
+  Blocker(const dzn::locator&);
   void check_bindings() const;
   void dump_tree(std::ostream& os=std::clog) const;
 };
 
-#endif // SORTINGSYSTEM_HH
+#endif // BLOCKER_HH
 
 /***********************************  SYSTEM  ***********************************/
 
