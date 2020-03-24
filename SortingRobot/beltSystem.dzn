@@ -1,6 +1,9 @@
 import interfaces.dzn;
 import ITimer.dzn;
 
+/**
+ * @throws error() when the ticker does not get a signal after 10 seconds (10000 ms)
+ */
 interface IBelt {
 	in void start();
 	in void stop();

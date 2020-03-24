@@ -2,72 +2,82 @@ import sortingSystem.dzn;
 import takingSystem.dzn;
 import returnSystem.dzn;
 import IRobotCommunication.dzn;
-
-interface IRobot {
-	in void start();
-	in void stop();
-	
-	enum State {Off, Idle, Running};
-	
-	behaviour {
-		State state = State.Off;
-		
-		[state.Off] {
-			on start: {state = State.Idle;}
-			on stop: {}
-		}
-		[state.Idle] {
-			on start: {}
-			on stop: {state = State.Off;}
-		}
-		[state.Running] {
-			on start: {}
-			on stop: {state = State.Off;}
-		}
-	}
-}
+import ITimer.dzn;
 
 component Robot {
-	provides IRobot robot;
+	provides IRobotCommunication robot;
 	
 	system {
 		RaspberryPi controller;
-		CommunicationSystem communication;
 		SortingSystem sorter;
 		TakingSystem taker;
 		ReturningSystem returner;
+		Timer heartbeatClock;
 		
 		robot <=> controller.controller;
-		controller.communication <=> communication.communication;
 		controller.sorting <=> sorter.sortingSystem;
 		controller.taker <=> taker.takingSystem;
 		controller.returner <=> returner.returningSystem;
+		controller.heartbeatClock <=> heartbeatClock.iTimer;
 	}
 }
 
 component RaspberryPi {
-	provides IRobot controller;
+	provides IRobotCommunication controller;
 	
-	requires IRobotCommunication communication;
 	requires ISorter sorting;
 	requires ITaking taker;
 	requires IReturner returner;
+	requires ITimer heartbeatClock;
 	
 	behaviour {
-		IRobot.State state = IRobot.State.Off;
+		enum State {Idle, Running};
+		State state = State.Idle;
 		
-		[state.Off] {
-			on controller.start(): {
-				state = IRobot.State.Idle;
-			}
-			on controller.stop(): {}
-		}
+		on controller.respondDiskCounters(), 
+		   controller.respondDisksTaken(),
+		   controller.error_in(),
+		   controller.heartbeat1(),
+		   controller.heartbeat2(),
+		   controller.heartbeat3(),
+		   controller.heartbeat4(),
+		   controller.tookDisk_in(): {}
+		
 		[state.Idle] {
-			
-			on controller.start(): {}
+			on controller.start(): {
+				state = State.Running;
+				sorting.start();
+				taker.start();
+				returner.start();
+				heartbeatClock.start($5000$); // 5 second heartbeat
+			}
+			on controller.stop(): illegal;
+			on controller.emergencyStop(): {}
 		}
 		[state.Running] {
+			on controller.stop(), controller.emergencyStop(): {
+				state = State.Idle;
+				sorting.stop();
+				taker.stop();
+				returner.stop();
+				heartbeatClock.cancel();
+			}
 			
+			on sorting.error(), taker.error(), returner.error(): {
+				state = State.Idle; // TODO: WORK ON ERROR CODES AND SEVERITY OF IT SO WE DON'T STOP THE WHOLE FACTORY
+				controller.emergency();
+				sorting.stop();
+				taker.stop();
+				returner.stop();
+				heartbeatClock.cancel();
+			}
+			
+			on heartbeatClock.timeout(): {
+				heartbeatClock.start($5000$);
+				controller.heartbeat();
+			}
+			
+			on controller.start(): illegal;
 		}
 	}
 }

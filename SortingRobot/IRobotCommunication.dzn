@@ -73,7 +73,3 @@ interface IRobotCommunication {
 		}
 	}
 }
-
-component CommunicationSystem {
-	provides IRobotCommunication communication;
-}
