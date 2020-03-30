@@ -33,11 +33,13 @@ component ReturningSystem {
 	system {
 		Returner returner;
 		DiskDetector sensor;
-		Belt belt;
+		Belt firstBelt;
+		Belt elevatedBelt;
 		
 		returningSystem <=> returner.returner;
 		returner.diskDetector <=> sensor.sensor;
-		returner.belt <=> belt.belt;
+		returner.firstBelt <=> firstBelt.belt;
+		returner.elevatedBelt <=> elevatedBelt.belt;
 	}
 }
 
@@ -45,5 +47,51 @@ component Returner {
 	provides IReturner returner;
 	
 	requires IBasicSensor diskDetector;
-	requires IBelt belt;
+	requires IBelt firstBelt;
+	requires IBelt elevatedBelt;
+	
+	behaviour {
+		IReturner.State state = IReturner.State.Stopped;
+		
+		[state.Stopped] {
+			on returner.start(): {
+				diskDetector.activate();
+				firstBelt.start();
+				elevatedBelt.start();
+				state = IReturner.State.Running;
+			}
+			
+			on returner.stop(): illegal;
+			on firstBelt.error(), elevatedBelt.error(): {
+				// TODO: Consider if this needs an implementation...
+			}
+		}
+		
+		[state.Running] {
+			on returner.stop(): {
+				diskDetector.deactivate();
+				firstBelt.stop();
+				elevatedBelt.stop();
+				state = IReturner.State.Stopped;
+			}
+			
+			on diskDetector.triggered(): {
+				// TODO: Consider if implementation is necessary...
+			}
+			
+			on firstBelt.error(), elevatedBelt.error(): {
+				diskDetector.deactivate();
+				firstBelt.stop();
+				elevatedBelt.stop();
+			}
+			
+			on returner.start(): illegal;
+		}
+		
+		[state.ERROR] {
+			on returner.start(): illegal;
+			on returner.stop(): {state = IReturner.State.Stopped;}
+			on firstBelt.error(), elevatedBelt.error(): {}
+		}
+	}
 }
