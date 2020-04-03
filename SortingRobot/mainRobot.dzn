@@ -1,3 +1,4 @@
+import interfaces.dzn;
 import sortingSystem.dzn;
 import takingSystem.dzn;
 import returnSystem.dzn;
@@ -47,7 +48,7 @@ component RaspberryPi {
 			on controller.start(): {
 				state = State.Running;
 				sorting.start();
-				taker.start();
+				taker.start(); // TODO: C++ On / Off toggle?
 				returner.start();
 				heartbeatClock.start($5000$); // 5 second heartbeat
 			}
@@ -58,23 +59,73 @@ component RaspberryPi {
 			on controller.stop(), controller.emergencyStop(): {
 				state = State.Idle;
 				sorting.stop();
-				taker.stop();
+				taker.stop(); 
 				returner.stop();
 				heartbeatClock.cancel();
 			}
 			
-			on sorting.error(), taker.error(), returner.error(): {
-				state = State.Idle; // TODO: WORK ON ERROR CODES AND SEVERITY OF IT SO WE DON'T STOP THE WHOLE FACTORY
-				controller.emergency();
-				sorting.stop();
-				taker.stop();
-				returner.stop();
-				heartbeatClock.cancel();
+			on sorting.error(): {
+				ISorter.SortingErrors sortError = sorting.getErrorState();
+				if (sortError == ISorter.SortingErrors.S000) {
+				// Sorting Piston stuck RETRACTED
+					controller.error_out();
+				} else if (sortError == ISorter.SortingErrors.S010) { 
+				// Sorting Piston stuck EXTENDED
+					controller.error_out();
+				} else if (sortError == ISorter.SortingErrors.S100) {
+				// Sorting belt error
+					controller.error_out();
+				} else {}
 			}
+			
+			on taker.error(): {
+				ITaking.TakingErrors takeError = taker.getErrorState();
+				if (takeError == ITaking.TakingErrors.T010) { 
+				// Piston blocking factory. Emergency!
+					state = State.Idle;
+					controller.emergency();
+					sorting.stop();
+					taker.stop();
+					returner.stop();
+					heartbeatClock.cancel();
+				} else if (takeError == ITaking.TakingErrors.T000) {
+				// Piston does not block factory, reboot.
+					state = State.Idle;
+					sorting.stop();
+					taker.stop();
+					returner.stop();
+					controller.error_out();
+				} else {}
+			}
+			
+			on returner.error(): {
+				IReturner.ReturnerErrors returnError = returner.getErrorState();
+				if (returnError == IReturner.ReturnerErrors.R100) { 
+				// 1st belt error
+					controller.error_out();
+				} else if (returnError == IReturner.ReturnerErrors.R101) { 
+				// 2nd belt error (elevator)
+					controller.error_out();
+				} else if (returnError == IReturner.ReturnerErrors.R290) { 
+				// Timeout error
+					controller.error_out();
+				} else {}
+			}
+			
+			// Disk passed sensor without any left in queue
+			on returner.warning(): {} // C++ TODO: implement this in C++
 			
 			on heartbeatClock.timeout(): {
 				heartbeatClock.start($5000$);
 				controller.heartbeat();
+			}
+			
+			on sorting.returnDisk(): { // inter-subsystem communication
+				returner.addDisk();
+			}
+			
+			on taker.tookDisk(): {
+				controller.tookDisk_out();
 			}
 			
 			on controller.start(): illegal;

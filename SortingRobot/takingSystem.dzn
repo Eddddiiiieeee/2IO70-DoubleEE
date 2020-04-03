@@ -4,25 +4,35 @@ import blockingSystem.dzn;
 interface ITaking {
 	in void start();
 	in void stop();
+	out void tookDisk();
 	out void error();
 	
+	in TakingErrors getErrorState();
+	
 	enum State {Running, Stopped, Error};
+	enum TakingErrors {none, T000, T010};
 	
 	behaviour {
 		State state = State.Stopped;
+		TakingErrors takingErrors = TakingErrors.none;
 		
 		[state.Stopped] {
 			on start: {state = State.Running;}
-			on stop: illegal;
+			on stop: {}
+			on getErrorState: {reply(takingErrors);}
 		}
 		[state.Running] {
 			on start: illegal;
 			on stop: {state = State.Stopped;}
-			on optional: {error; state = State.Error;}
+			on getErrorState: {reply(takingErrors);}
+			on optional: {error; state = State.Error; takingErrors = TakingErrors.T000;}
+			on optional: {error; state = State.Error; takingErrors = TakingErrors.T010;}
+			on optional: {tookDisk;}
 		}
 		[state.Error] {
 			on start: illegal;
-			on stop: {state = State.Stopped;}
+			on stop: {state = State.Stopped; takingErrors = TakingErrors.none;}
+			on getErrorState: {reply(takingErrors);}
 		}
 	}
 }
@@ -52,13 +62,16 @@ component Taker {
 		IBlocker.unsigned_integer timeoutTime = $10000$;
 		ITaking.State state = ITaking.State.Stopped;
 		
+		ITaking.TakingErrors errorState = ITaking.TakingErrors.none;
+		
 		[state.Stopped] {
 			on taker.start(): {
 				diskDetector.activate();
 				state = ITaking.State.Running;
 			}
-			on taker.stop(): illegal;
+			on taker.stop(): {}
 			on blocker.error(): {}
+			on taker.getErrorState(): {reply(errorState);}
 		}
 		[state.Running] {
 			on taker.start(): illegal;
@@ -68,19 +81,34 @@ component Taker {
 				state = ITaking.State.Stopped;
 			}
 			on blocker.error(): {
-				state = ITaking.State.Error;
-				taker.error();
-				diskDetector.deactivate();
+				IBlocker.BlockerErrors pistonState = blocker.getErrorState();
+				if (pistonState == IBlocker.BlockerErrors.pistonRetracted) { // Piston not blocking factory belt
+					state = ITaking.State.Error;
+					errorState = ITaking.TakingErrors.T000;
+					taker.error();
+					diskDetector.deactivate();
+				} else if (pistonState == IBlocker.BlockerErrors.pistonExtended) { // Piston blocks factory, EMERGENCY!
+					state = ITaking.State.Error;
+					errorState = ITaking.TakingErrors.T010;
+					taker.error();
+					diskDetector.deactivate();
+				} else {} // not possible
 			}
 			on diskDetector.triggered(): {
 				blocker.trigger(extendTime, timeoutTime);
+				taker.tookDisk();
 				diskDetector.activate();
 			}
+			on taker.getErrorState(): {reply(errorState);}
 		}
 		[state.Error] {
 			on taker.start(): illegal;
-			on taker.stop(): {state = ITaking.State.Stopped;}
+			on taker.stop(): {
+				state = ITaking.State.Stopped;
+				errorState = ITaking.TakingErrors.none;
+			}
 			on blocker.error(): {}
+			on taker.getErrorState(): {reply(errorState);}
 		}
 	}
 }
