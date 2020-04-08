@@ -22,7 +22,7 @@ interface ITaking {
 			on getErrorState: {reply(takingErrors);}
 		}
 		[state.Running] {
-			on start: illegal;
+			on start: {}
 			on stop: {state = State.Stopped;}
 			on getErrorState: {reply(takingErrors);}
 			on optional: {error; state = State.Error; takingErrors = TakingErrors.T000;}
@@ -74,7 +74,7 @@ component Taker {
 			on taker.getErrorState(): {reply(errorState);}
 		}
 		[state.Running] {
-			on taker.start(): illegal;
+			on taker.start(): {}
 			on taker.stop(): {
 				blocker.stop();
 				diskDetector.deactivate();

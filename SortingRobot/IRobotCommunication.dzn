@@ -22,6 +22,20 @@ interface IRobotCommunication {
 	out void requestDisksTaken();
 	in void respondDisksTaken();
 	
+	in void reboot();
+	in void resumeTaking();
+	in void pauseTaking();
+	
+	out void T010();
+	out void T000();
+	out void S000();
+	out void S010();
+	out void S100();
+	out void R100();
+	out void R101();
+	out void R290();
+	out void R200();
+	
 	behaviour {
 		enum State { Idle, Running };
 		State state = State.Idle;
@@ -33,7 +47,8 @@ interface IRobotCommunication {
 		   heartbeat2,
 		   heartbeat3,
 		   heartbeat4,
-		   tookDisk_in: {}
+		   tookDisk_in,
+		   reboot: {}
 		
 		[state.Idle] {
 			on start: state = State.Running;
@@ -41,10 +56,13 @@ interface IRobotCommunication {
 			on emergencyStop: {}
 		}
 		
+		on resumeTaking, pauseTaking: illegal;
+		
 		[state.Running] {
 			on stop, emergencyStop: state = State.Idle;
 			
 			on optional: {
+				T010;
 				state = State.Idle;
 				emergency;
 			}
@@ -68,6 +86,41 @@ interface IRobotCommunication {
 			on optional: {
 				heartbeat;
 			}
+			
+			// Ad hoc error handling. Too lazy to figure out code in Dezyne.
+			on optional: {
+				T000;
+				error_out;
+			}
+			on optional: {
+				S000;
+				error_out;
+			}
+			on optional: {
+				S010;
+				error_out;
+			}
+			on optional: {
+				S100;
+				error_out;
+			}
+			on optional: {
+				R100;
+				error_out;
+			}
+			on optional: {
+				R101;
+				error_out;
+			}
+			on optional: {
+				R290;
+				error_out;
+			}
+			on optional: {
+				R200;
+			}
+			
+			on resumeTaking, pauseTaking: {}
 			
 			on start: illegal;
 		}

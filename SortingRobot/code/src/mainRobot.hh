@@ -23,94 +23,6 @@ namespace dzn {
 #include <map>
 
 
-/********************************** INTERFACE *********************************/
-#ifndef ISORTER_HH
-#define ISORTER_HH
-
-
-
-struct ISorter
-{
-#ifndef ENUM_ISorter_State
-#define ENUM_ISorter_State 1
-
-
-  struct State
-  {
-    enum type
-    {
-      Running,Stopped,Error
-    };
-  };
-
-
-#endif // ENUM_ISorter_State
-
-  struct
-  {
-    std::function< void()> start;
-    std::function< void()> stop;
-  } in;
-
-  struct
-  {
-    std::function< void()> error;
-  } out;
-
-  dzn::port::meta meta;
-  inline ISorter(const dzn::port::meta& m) : meta(m) {}
-
-  void check_bindings() const
-  {
-    if (! in.start) throw dzn::binding_error(meta, "in.start");
-    if (! in.stop) throw dzn::binding_error(meta, "in.stop");
-
-    if (! out.error) throw dzn::binding_error(meta, "out.error");
-
-  }
-};
-
-inline void connect (ISorter& provided, ISorter& required)
-{
-  provided.out = required.out;
-  required.in = provided.in;
-  provided.meta.requires = required.meta.requires;
-  required.meta.provides = provided.meta.provides;
-}
-
-
-#ifndef ENUM_TO_STRING_ISorter_State
-#define ENUM_TO_STRING_ISorter_State 1
-inline std::string to_string(::ISorter::State::type v)
-{
-  switch(v)
-  {
-    case ::ISorter::State::Running: return "State_Running";
-    case ::ISorter::State::Stopped: return "State_Stopped";
-    case ::ISorter::State::Error: return "State_Error";
-
-  }
-  return "";
-}
-#endif // ENUM_TO_STRING_ISorter_State
-
-#ifndef STRING_TO_ENUM_ISorter_State
-#define STRING_TO_ENUM_ISorter_State 1
-inline ::ISorter::State::type to_ISorter_State(std::string s)
-{
-  static std::map<std::string, ::ISorter::State::type> m = {
-    {"State_Running", ::ISorter::State::Running},
-    {"State_Stopped", ::ISorter::State::Stopped},
-    {"State_Error", ::ISorter::State::Error},
-  };
-  return m.at(s);
-}
-#endif // STRING_TO_ENUM_ISorter_State
-
-
-#endif // ISORTER_HH
-
-/********************************** INTERFACE *********************************/
 /***********************************  FOREIGN  **********************************/
 #ifndef SKEL_BUTTON_HH
 #define SKEL_BUTTON_HH
@@ -270,63 +182,6 @@ namespace skel {
 #endif // TIMER_HH
 
 /***********************************  FOREIGN  **********************************/
-/********************************** COMPONENT *********************************/
-#ifndef SORTER_HH
-#define SORTER_HH
-
-#include "interfaces.hh"
-#include "interfaces.hh"
-#include "beltSystem.hh"
-#include "blockingSystem.hh"
-#include "ITimer.hh"
-
-
-
-struct Sorter
-{
-  dzn::meta dzn_meta;
-  dzn::runtime& dzn_rt;
-  dzn::locator const& dzn_locator;
-
-  unsigned int extendTime;
-  unsigned int timeoutTime;
-  unsigned int diskScanInterval;
-  ::ISorter::State::type state;
-
-
-  std::function<void ()> out_sorter;
-
-  ::ISorter sorter;
-
-  ::IBasicSensor diskDetector;
-  ::IColorSensor colorSensor;
-  ::IBelt belt;
-  ::IBlocker blocker;
-  ::ITimer colorTimer;
-
-
-  Sorter(const dzn::locator&);
-  void check_bindings() const;
-  void dump_tree(std::ostream& os) const;
-  friend std::ostream& operator << (std::ostream& os, const Sorter& m)  {
-    (void)m;
-    return os << "[" << m.extendTime <<", " << m.timeoutTime <<", " << m.diskScanInterval <<", " << m.state <<"]" ;
-  }
-  private:
-  void sorter_start();
-  void sorter_stop();
-  void diskDetector_triggered();
-  void colorSensor_lightDisk();
-  void colorSensor_darkDisk();
-  void belt_error();
-  void blocker_error();
-  void colorTimer_timeout();
-
-};
-
-#endif // SORTER_HH
-
-/********************************** COMPONENT *********************************/
 /***********************************  FOREIGN  **********************************/
 #ifndef SKEL_COLORSENSOR_HH
 #define SKEL_COLORSENSOR_HH
@@ -344,7 +199,7 @@ namespace skel {
     dzn::meta dzn_meta;
     dzn::runtime& dzn_rt;
     dzn::locator const& dzn_locator;
-    ::IColorSensor colorSensor;
+    ::IBasicSensor colorSensor;
 
 
     ColorSensor(const dzn::locator& dzn_locator)
@@ -380,44 +235,145 @@ namespace skel {
 #endif // COLORSENSOR_HH
 
 /***********************************  FOREIGN  **********************************/
+/********************************** COMPONENT *********************************/
+#ifndef RASPBERRYPI_HH
+#define RASPBERRYPI_HH
+
+#include "IRobotCommunication.hh"
+#include "sortingSystem.hh"
+#include "takingSystem.hh"
+#include "returnSystem.hh"
+#include "ITimer.hh"
+#include "ITimer.hh"
+#include "ITimer.hh"
+#include "ITimer.hh"
+#include "ITimer.hh"
+
+
+
+struct RaspberryPi
+{
+  dzn::meta dzn_meta;
+  dzn::runtime& dzn_rt;
+  dzn::locator const& dzn_locator;
+#ifndef ENUM_RaspberryPi_State
+#define ENUM_RaspberryPi_State 1
+
+
+  struct State
+  {
+    enum type
+    {
+      Idle,Running,Error
+    };
+  };
+
+
+#endif // ENUM_RaspberryPi_State
+
+  ::RaspberryPi::State::type state;
+
+  ::ISorter::SortingErrors::type reply_ISorter_SortingErrors;
+  ::ITaking::TakingErrors::type reply_ITaking_TakingErrors;
+  ::IReturner::ReturnerErrors::type reply_IReturner_ReturnerErrors;
+
+  std::function<void ()> out_controller;
+
+  ::IRobotCommunication controller;
+
+  ::ISorter sorting;
+  ::ITaking taker;
+  ::IReturner returner;
+  ::ITimer heartbeatClock;
+  ::ITimer heartbeat1;
+  ::ITimer heartbeat2;
+  ::ITimer heartbeat3;
+  ::ITimer heartbeat4;
+
+
+  RaspberryPi(const dzn::locator&);
+  void check_bindings() const;
+  void dump_tree(std::ostream& os) const;
+  friend std::ostream& operator << (std::ostream& os, const RaspberryPi& m)  {
+    (void)m;
+    return os << "[" << m.state <<"]" ;
+  }
+  private:
+  void controller_start();
+  void controller_stop();
+  void controller_emergencyStop();
+  void controller_respondDiskCounters();
+  void controller_heartbeat1();
+  void controller_heartbeat2();
+  void controller_heartbeat3();
+  void controller_heartbeat4();
+  void controller_tookDisk_in();
+  void controller_error_in();
+  void controller_respondDisksTaken();
+  void controller_reboot();
+  void controller_resumeTaking();
+  void controller_pauseTaking();
+  void sorting_error();
+  void sorting_returnDisk();
+  void taker_tookDisk();
+  void taker_error();
+  void returner_error();
+  void returner_warning();
+  void heartbeatClock_timeout();
+  void heartbeat1_timeout();
+  void heartbeat2_timeout();
+  void heartbeat3_timeout();
+  void heartbeat4_timeout();
+
+};
+
+#endif // RASPBERRYPI_HH
+
+/********************************** COMPONENT *********************************/
 /***********************************  SYSTEM  ***********************************/
-#ifndef SORTINGSYSTEM_HH
-#define SORTINGSYSTEM_HH
+#ifndef ROBOT_HH
+#define ROBOT_HH
 
 
 #include <dzn/locator.hh>
 
-#include "DiskDetector.hh"
-#include "ColorSensor.hh"
-#include "beltSystem.hh"
-#include "blockingSystem.hh"
+#include "takingSystem.hh"
+#include "sortingSystem.hh"
+#include "returnSystem.hh"
+#include "Timer.hh"
+#include "Timer.hh"
+#include "Timer.hh"
+#include "Timer.hh"
 #include "Timer.hh"
 
 
 
-struct SortingSystem
+struct Robot
 {
   dzn::meta dzn_meta;
   dzn::runtime& dzn_rt;
   dzn::locator const& dzn_locator;
 
 
-  ::Sorter sorter;
-  ::DiskDetector diskDetector;
-  ::ColorSensor colorSensor;
-  ::Belt belt;
-  ::Blocker blocker;
-  ::Timer timer;
+  ::RaspberryPi controller;
+  ::TakingSystem taker;
+  ::SortingSystem sorter;
+  ::ReturningSystem returner;
+  ::Timer heartbeatClock;
+  ::Timer heartbeat1;
+  ::Timer heartbeat2;
+  ::Timer heartbeat3;
+  ::Timer heartbeat4;
 
-  ::ISorter& sortingSystem;
+  ::IRobotCommunication& robot;
 
 
-  SortingSystem(const dzn::locator&);
+  Robot(const dzn::locator&);
   void check_bindings() const;
   void dump_tree(std::ostream& os=std::clog) const;
 };
 
-#endif // SORTINGSYSTEM_HH
+#endif // ROBOT_HH
 
 /***********************************  SYSTEM  ***********************************/
 
