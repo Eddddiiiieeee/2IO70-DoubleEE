@@ -8,28 +8,35 @@ import ITimer.dzn;
  */
 interface IBlocker {
 	extern unsigned_integer $unsigned int$;
+	enum BlockerErrors {none , pistonExtended, pistonRetracted};
 	in void trigger(unsigned_integer extendTime, unsigned_integer timeoutTime);	
 	in void stop();
 	out void error();
+	in BlockerErrors getErrorState();
 	
 	behaviour {
 		enum State {Retracted, Extended, Error};
 		State state = State.Retracted;
+		BlockerErrors errorState = BlockerErrors.none;
 		
 		[state.Retracted] {
 			on trigger: state = State.Extended;
 			on stop: {}
-			on optional: {error; state = State.Error;}
+			on getErrorState: {reply(BlockerErrors.none);}
+			on optional: {error; state = State.Error; errorState = BlockerErrors.pistonExtended;}
 		}
 		
 		[state.Extended] {
 			on trigger: {}
 			on stop: state = State.Retracted;
-			on optional: {error; state = State.Error;}
+			on getErrorState: {reply(BlockerErrors.none);}
+			on optional: {error; state = State.Error; errorState = BlockerErrors.pistonRetracted;}
+			on optional: {error; state = State.Error; errorState = BlockerErrors.pistonExtended;}
 		}
 		[state.Error] {
 			on trigger: {}
-			on stop: state = State.Retracted;
+			on stop: {state = State.Retracted; errorState = BlockerErrors.none;}
+			on getErrorState: {reply(errorState);}
 		}
 	}
 }
@@ -65,10 +72,12 @@ component BlockerController {
 		//ITimer.unsigned_integer timeoutTime = $10000$;
 		bool pistonExtended = false;
 		enum State {Retracted, Extended, Error};
+		IBlocker.BlockerErrors errorState = IBlocker.BlockerErrors.none;
 		State state = State.Retracted;
 		
 		[state.Retracted] {
 			on controller.trigger(extendTime, timeoutTime): {		
+				sensor.deactivate();
 				sensor.activate();		
 				pistonTimer.start(extendTime); // Time piston is extended
 				timeout.start(timeoutTime); // Timer if sensor does not detect piston is up
@@ -77,7 +86,18 @@ component BlockerController {
 				state = State.Extended;
 			}
 			
-			on controller.stop(), timeout.timeout(), sensor.triggered(): {}
+			on controller.stop(), timeout.timeout(): {}
+			
+			on sensor.triggered(): { // Piston stuck on.
+				controller.error();
+				pistonTimer.cancel();
+				timeout.cancel();
+				sensor.deactivate();
+				state = State.Error;
+				errorState = IBlocker.BlockerErrors.pistonExtended;
+			}
+			
+			on controller.getErrorState(): {reply(errorState);}
 		}
 		
 		[state.Extended] {
@@ -107,6 +127,7 @@ component BlockerController {
 				timeout.cancel();
 				sensor.deactivate();
 				state = State.Retracted;
+				sensor.activate();
 			}
 			
 			on pistonTimer.timeout(): {
@@ -114,6 +135,7 @@ component BlockerController {
 					piston.retract();
 					pistonExtended = !pistonExtended;
 					state = State.Retracted;
+					sensor.activate();
 				} 
 				[!pistonExtended] {
 					controller.error();
@@ -122,6 +144,7 @@ component BlockerController {
 					sensor.deactivate();
 					piston.retract();
 					state = State.Error;
+					errorState = IBlocker.BlockerErrors.pistonRetracted;
 				}
 			}
 			
@@ -136,21 +159,29 @@ component BlockerController {
 				sensor.deactivate();
 				piston.retract();
 				state = State.Error;
+				errorState = IBlocker.BlockerErrors.pistonRetracted;
 			}
+			
+			on controller.getErrorState(): {reply(errorState);}
 		}
 		
 		[state.Error] {
 			on controller.stop(): {
 				[!pistonExtended] {
 					state = State.Retracted;
+					sensor.activate();
+					errorState = IBlocker.BlockerErrors.none;
 				}
 				[pistonExtended] {
 					piston.retract();
 					pistonExtended = !pistonExtended;
 					state = State.Retracted;
+					sensor.activate();
+					errorState = IBlocker.BlockerErrors.none;
 				}
 			}
 			on controller.trigger(extendTime, timeoutTime), sensor.triggered(): {}
+			on controller.getErrorState(): {reply(errorState);}
 		}
 	}
 }

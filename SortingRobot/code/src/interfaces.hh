@@ -72,56 +72,6 @@ inline void connect (IBasicSensor& provided, IBasicSensor& required)
 
 /********************************** INTERFACE *********************************/
 /********************************** INTERFACE *********************************/
-#ifndef ICOLORSENSOR_HH
-#define ICOLORSENSOR_HH
-
-
-
-struct IColorSensor
-{
-
-  struct
-  {
-    std::function< void()> activate;
-    std::function< void()> deactivate;
-  } in;
-
-  struct
-  {
-    std::function< void()> lightDisk;
-    std::function< void()> darkDisk;
-  } out;
-
-  dzn::port::meta meta;
-  inline IColorSensor(const dzn::port::meta& m) : meta(m) {}
-
-  void check_bindings() const
-  {
-    if (! in.activate) throw dzn::binding_error(meta, "in.activate");
-    if (! in.deactivate) throw dzn::binding_error(meta, "in.deactivate");
-
-    if (! out.lightDisk) throw dzn::binding_error(meta, "out.lightDisk");
-    if (! out.darkDisk) throw dzn::binding_error(meta, "out.darkDisk");
-
-  }
-};
-
-inline void connect (IColorSensor& provided, IColorSensor& required)
-{
-  provided.out = required.out;
-  required.in = provided.in;
-  provided.meta.requires = required.meta.requires;
-  required.meta.provides = provided.meta.provides;
-}
-
-
-
-
-
-#endif // ICOLORSENSOR_HH
-
-/********************************** INTERFACE *********************************/
-/********************************** INTERFACE *********************************/
 #ifndef IMOTOR_HH
 #define IMOTOR_HH
 

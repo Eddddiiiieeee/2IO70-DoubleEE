@@ -28,6 +28,6 @@ ColorSensor::checkSensor() {
         return;
     }
     if (digitalRead(pin)) {
-        colorSensor.out.lightDisk();
+        colorSensor.out.triggered();
     }
 }

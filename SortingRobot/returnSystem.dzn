@@ -4,29 +4,43 @@ import beltSystem.dzn;
 interface IReturner {
 	in void start();
 	in void stop();
+	in void addDisk();
 	out void error();
+	out void warning();
 	
-	enum State {Running, Stopped, ERROR};
+	in ReturnerErrors getErrorState();
+	
+	enum State {Running, Stopped, Error};
+	enum ReturnerErrors {none, R100, R101, R290, R200};
 	
 	behaviour {
 		State state = State.Stopped;
+		ReturnerErrors returnerErrors = ReturnerErrors.none;
 		
 		[state.Stopped] {
 			on start: {state = State.Running;}
 			on stop: illegal;
+			on addDisk: {}
+			on getErrorState: {reply(returnerErrors);}
 		}
 		[state.Running] {
 			on start: illegal;
 			on stop: {state = State.Stopped;}
-			on optional: {error; state = State.ERROR;}
+			on addDisk: {}
+			on getErrorState: {reply(returnerErrors);}
+			on optional: {error; state = State.Error; returnerErrors = ReturnerErrors.R100;}
+			on optional: {error; state = State.Error; returnerErrors = ReturnerErrors.R101;}
+			on optional: {error; state = State.Error; returnerErrors = ReturnerErrors.R290;}
+			on optional: {warning; returnerErrors = ReturnerErrors.R200;}
 		}
-		[state.ERROR] {
+		[state.Error] {
 			on start: illegal;
-			on stop: {state = State.Stopped;}
+			on addDisk: {}
+			on stop: {state = State.Stopped; returnerErrors = ReturnerErrors.none;}
+			on getErrorState: {reply(returnerErrors);}
 		}
 	}
 }
-
 component ReturningSystem {
 	provides IReturner returningSystem;
 	
@@ -35,11 +49,13 @@ component ReturningSystem {
 		DiskDetector sensor;
 		Belt firstBelt;
 		Belt elevatedBelt;
+		Timer timer;
 		
 		returningSystem <=> returner.returner;
 		returner.diskDetector <=> sensor.sensor;
 		returner.firstBelt <=> firstBelt.belt;
 		returner.elevatedBelt <=> elevatedBelt.belt;
+		returner.timer <=> timer.iTimer;
 	}
 }
 
@@ -49,22 +65,30 @@ component Returner {
 	requires IBasicSensor diskDetector;
 	requires IBelt firstBelt;
 	requires IBelt elevatedBelt;
+	requires ITimer timer;
 	
 	behaviour {
 		IReturner.State state = IReturner.State.Stopped;
+		IReturner.ReturnerErrors errorState = IReturner.ReturnerErrors.none;
+		ITimer.unsigned_integer returningTime = $30000$;
+		subint diskQueue {0..63};
+		diskQueue queue = 0;
 		
 		[state.Stopped] {
 			on returner.start(): {
 				diskDetector.activate();
 				firstBelt.start();
 				elevatedBelt.start();
+				timer.start(returningTime);
 				state = IReturner.State.Running;
 			}
 			
 			on returner.stop(): illegal;
-			on firstBelt.error(), elevatedBelt.error(): {
-				// TODO: Consider if this needs an implementation...
+			on firstBelt.error(), elevatedBelt.error(): {}
+			on returner.addDisk(): {
+				// TODO: Consider if this is illegal
 			}
+			on returner.getErrorState(): {reply(errorState);}
 		}
 		
 		[state.Running] {
@@ -72,25 +96,75 @@ component Returner {
 				diskDetector.deactivate();
 				firstBelt.stop();
 				elevatedBelt.stop();
+				timer.cancel();
 				state = IReturner.State.Stopped;
 			}
 			
 			on diskDetector.triggered(): {
-				// TODO: Consider if implementation is necessary...
+				[queue == 0] {
+					diskDetector.activate();
+					returner.warning();
+					errorState = IReturner.ReturnerErrors.R200;
+				}
+				[queue > 0] {
+					queue = queue - 1;
+					timer.cancel();
+					timer.start(returningTime);
+					diskDetector.activate();
+				}
 			}
 			
-			on firstBelt.error(), elevatedBelt.error(): {
+			on returner.addDisk(): {
+				[queue != 63] {
+					queue = queue + 1;
+				}
+				[queue == 63] {
+					// Not realistically possible
+				}
+			}
+			
+			on timer.timeout(): { // Disk did not get returned
+				returner.error();
 				diskDetector.deactivate();
 				firstBelt.stop();
 				elevatedBelt.stop();
+				state = IReturner.State.Error;
+				errorState = IReturner.ReturnerErrors.R290;
 			}
+			
+			on firstBelt.error(): {
+				returner.error();
+				diskDetector.deactivate();
+				firstBelt.stop();
+				elevatedBelt.stop();
+				timer.cancel();
+				state = IReturner.State.Error;
+				errorState = IReturner.ReturnerErrors.R100;
+			}
+			
+			on elevatedBelt.error(): {
+				returner.error();
+				diskDetector.deactivate();
+				firstBelt.stop();
+				elevatedBelt.stop();
+				timer.cancel();
+				state = IReturner.State.Error;
+				errorState = IReturner.ReturnerErrors.R101;
+			}
+			
+			on returner.getErrorState(): {reply(errorState);}
 			
 			on returner.start(): illegal;
 		}
 		
-		[state.ERROR] {
+		[state.Error] {
 			on returner.start(): illegal;
-			on returner.stop(): {state = IReturner.State.Stopped;}
+			on returner.stop(): {
+				state = IReturner.State.Stopped;
+				errorState = IReturner.ReturnerErrors.none;
+			}
+			on returner.addDisk(): {}
+			on returner.getErrorState(): {reply(errorState);}
 			on firstBelt.error(), elevatedBelt.error(): {}
 		}
 	}

@@ -24,53 +24,73 @@ namespace dzn {
 
 
 /********************************** INTERFACE *********************************/
-#ifndef IBLOCKER_HH
-#define IBLOCKER_HH
+#ifndef IRETURNER_HH
+#define IRETURNER_HH
 
 
 
-struct IBlocker
+struct IReturner
 {
-#ifndef ENUM_IBlocker_State
-#define ENUM_IBlocker_State 1
+#ifndef ENUM_IReturner_State
+#define ENUM_IReturner_State 1
 
 
   struct State
   {
     enum type
     {
-      Retracted,Extended,Error
+      Running,Stopped,Error
     };
   };
 
 
-#endif // ENUM_IBlocker_State
+#endif // ENUM_IReturner_State
+#ifndef ENUM_IReturner_ReturnerErrors
+#define ENUM_IReturner_ReturnerErrors 1
+
+
+  struct ReturnerErrors
+  {
+    enum type
+    {
+      none,R100,R101,R290,R200
+    };
+  };
+
+
+#endif // ENUM_IReturner_ReturnerErrors
 
   struct
   {
-    std::function< void(unsigned int,unsigned int)> trigger;
+    std::function< void()> start;
     std::function< void()> stop;
+    std::function< void()> addDisk;
+    std::function< ::IReturner::ReturnerErrors::type()> getErrorState;
   } in;
 
   struct
   {
     std::function< void()> error;
+    std::function< void()> warning;
   } out;
 
   dzn::port::meta meta;
-  inline IBlocker(const dzn::port::meta& m) : meta(m) {}
+  inline IReturner(const dzn::port::meta& m) : meta(m) {}
 
   void check_bindings() const
   {
-    if (! in.trigger) throw dzn::binding_error(meta, "in.trigger");
+    if (! in.start) throw dzn::binding_error(meta, "in.start");
     if (! in.stop) throw dzn::binding_error(meta, "in.stop");
+    if (! in.addDisk) throw dzn::binding_error(meta, "in.addDisk");
+    if (! in.getErrorState) throw dzn::binding_error(meta, "in.getErrorState");
 
     if (! out.error) throw dzn::binding_error(meta, "out.error");
+    if (! out.warning) throw dzn::binding_error(meta, "out.warning");
 
   }
 };
 
-inline void connect (IBlocker& provided, IBlocker& required)
+inline void connect (IReturner& provided, IReturner& required)
 {
   provided.out = required.out;
   required.in = provided.in;
@@ -79,36 +99,66 @@ inline void connect (IBlocker& provided, IBlocker& required)
 }
 
 
-#ifndef ENUM_TO_STRING_IBlocker_State
-#define ENUM_TO_STRING_IBlocker_State 1
-inline std::string to_string(::IBlocker::State::type v)
+#ifndef ENUM_TO_STRING_IReturner_State
+#define ENUM_TO_STRING_IReturner_State 1
+inline std::string to_string(::IReturner::State::type v)
 {
   switch(v)
   {
-    case ::IBlocker::State::Retracted: return "State_Retracted";
-    case ::IBlocker::State::Extended: return "State_Extended";
-    case ::IBlocker::State::Error: return "State_Error";
+    case ::IReturner::State::Running: return "State_Running";
+    case ::IReturner::State::Stopped: return "State_Stopped";
+    case ::IReturner::State::Error: return "State_Error";
 
   }
   return "";
 }
-#endif // ENUM_TO_STRING_IBlocker_State
-
-#ifndef STRING_TO_ENUM_IBlocker_State
-#define STRING_TO_ENUM_IBlocker_State 1
-inline ::IBlocker::State::type to_IBlocker_State(std::string s)
+#endif // ENUM_TO_STRING_IReturner_State
+#ifndef ENUM_TO_STRING_IReturner_ReturnerErrors
+#define ENUM_TO_STRING_IReturner_ReturnerErrors 1
+inline std::string to_string(::IReturner::ReturnerErrors::type v)
 {
-  static std::map<std::string, ::IBlocker::State::type> m = {
-    {"State_Retracted", ::IBlocker::State::Retracted},
-    {"State_Extended", ::IBlocker::State::Extended},
-    {"State_Error", ::IBlocker::State::Error},
+  switch(v)
+  {
+    case ::IReturner::ReturnerErrors::none: return "ReturnerErrors_none";
+    case ::IReturner::ReturnerErrors::R100: return "ReturnerErrors_R100";
+    case ::IReturner::ReturnerErrors::R101: return "ReturnerErrors_R101";
+    case ::IReturner::ReturnerErrors::R290: return "ReturnerErrors_R290";
+    case ::IReturner::ReturnerErrors::R200: return "ReturnerErrors_R200";
+
+  }
+  return "";
+}
+#endif // ENUM_TO_STRING_IReturner_ReturnerErrors
+
+#ifndef STRING_TO_ENUM_IReturner_State
+#define STRING_TO_ENUM_IReturner_State 1
+inline ::IReturner::State::type to_IReturner_State(std::string s)
+{
+  static std::map<std::string, ::IReturner::State::type> m = {
+    {"State_Running", ::IReturner::State::Running},
+    {"State_Stopped", ::IReturner::State::Stopped},
+    {"State_Error", ::IReturner::State::Error},
   };
   return m.at(s);
 }
-#endif // STRING_TO_ENUM_IBlocker_State
+#endif // STRING_TO_ENUM_IReturner_State
+#ifndef STRING_TO_ENUM_IReturner_ReturnerErrors
+#define STRING_TO_ENUM_IReturner_ReturnerErrors 1
+inline ::IReturner::ReturnerErrors::type to_IReturner_ReturnerErrors(std::string s)
+{
+  static std::map<std::string, ::IReturner::ReturnerErrors::type> m = {
+    {"ReturnerErrors_none", ::IReturner::ReturnerErrors::none},
+    {"ReturnerErrors_R100", ::IReturner::ReturnerErrors::R100},
+    {"ReturnerErrors_R101", ::IReturner::ReturnerErrors::R101},
+    {"ReturnerErrors_R290", ::IReturner::ReturnerErrors::R290},
+    {"ReturnerErrors_R200", ::IReturner::ReturnerErrors::R200},
+  };
+  return m.at(s);
+}
+#endif // STRING_TO_ENUM_IReturner_ReturnerErrors
 
 
-#endif // IBLOCKER_HH
+#endif // IRETURNER_HH
 
 /********************************** INTERFACE *********************************/
 /***********************************  FOREIGN  **********************************/
@@ -271,143 +321,97 @@ namespace skel {
 
 /***********************************  FOREIGN  **********************************/
 /********************************** COMPONENT *********************************/
-#ifndef BLOCKERCONTROLLER_HH
-#define BLOCKERCONTROLLER_HH
+#ifndef RETURNER_HH
+#define RETURNER_HH
 
 #include "interfaces.hh"
-#include "interfaces.hh"
+#include "beltSystem.hh"
+#include "beltSystem.hh"
 #include "ITimer.hh"
-#include "ITimer.hh"
 
 
 
-struct BlockerController
-{
-  dzn::meta dzn_meta;
-  dzn::runtime& dzn_rt;
-  dzn::locator const& dzn_locator;
-#ifndef ENUM_BlockerController_State
-#define ENUM_BlockerController_State 1
-
-
-  struct State
-  {
-    enum type
-    {
-      Retracted,Extended,Error
-    };
-  };
-
-
-#endif // ENUM_BlockerController_State
-
-  bool pistonExtended;
-  ::BlockerController::State::type state;
-
-
-  std::function<void ()> out_controller;
-
-  ::IBlocker controller;
-
-  ::IPiston piston;
-  ::IBasicSensor sensor;
-  ::ITimer pistonTimer;
-  ::ITimer timeout;
-
-
-  BlockerController(const dzn::locator&);
-  void check_bindings() const;
-  void dump_tree(std::ostream& os) const;
-  friend std::ostream& operator << (std::ostream& os, const BlockerController& m)  {
-    (void)m;
-    return os << "[" << m.pistonExtended <<", " << m.state <<"]" ;
-  }
-  private:
-  void controller_trigger(unsigned int extendTime,unsigned int timeoutTime);
-  void controller_stop();
-  void sensor_triggered();
-  void pistonTimer_timeout();
-  void timeout_timeout();
-
-};
-
-#endif // BLOCKERCONTROLLER_HH
-
-/********************************** COMPONENT *********************************/
-/********************************** COMPONENT *********************************/
-#ifndef PISTON_HH
-#define PISTON_HH
-
-#include "interfaces.hh"
-
-
-
-struct Piston
+struct Returner
 {
   dzn::meta dzn_meta;
   dzn::runtime& dzn_rt;
   dzn::locator const& dzn_locator;
 
-  ::IPiston::State::type state;
+  ::IReturner::State::type state;
+  ::IReturner::ReturnerErrors::type errorState;
+  unsigned int returningTime;
+  int queue;
+
+  ::IReturner::ReturnerErrors::type reply_IReturner_ReturnerErrors;
+
+  std::function<void ()> out_returner;
+
+  ::IReturner returner;
+
+  ::IBasicSensor diskDetector;
+  ::IBelt firstBelt;
+  ::IBelt elevatedBelt;
+  ::ITimer timer;
 
 
-  std::function<void ()> out_piston;
-
-  ::IPiston piston;
-
-
-
-  Piston(const dzn::locator&);
+  Returner(const dzn::locator&);
   void check_bindings() const;
   void dump_tree(std::ostream& os) const;
-  friend std::ostream& operator << (std::ostream& os, const Piston& m)  {
+  friend std::ostream& operator << (std::ostream& os, const Returner& m)  {
     (void)m;
-    return os << "[" << m.state <<"]" ;
+    return os << "[" << m.state <<", " << m.errorState <<", " << m.returningTime <<", " << m.queue <<"]" ;
   }
   private:
-  void piston_extend();
-  void piston_retract();
+  void returner_start();
+  void returner_stop();
+  void returner_addDisk();
+  ::IReturner::ReturnerErrors::type returner_getErrorState();
+  void diskDetector_triggered();
+  void firstBelt_error();
+  void elevatedBelt_error();
+  void timer_timeout();
 
 };
 
-#endif // PISTON_HH
+#endif // RETURNER_HH
 
 /********************************** COMPONENT *********************************/
 /***********************************  SYSTEM  ***********************************/
-#ifndef BLOCKER_HH
-#define BLOCKER_HH
+#ifndef RETURNINGSYSTEM_HH
+#define RETURNINGSYSTEM_HH
 
 
 #include <dzn/locator.hh>
 
-#include "Button.hh"
+#include "DiskDetector.hh"
+#include "beltSystem.hh"
+#include "beltSystem.hh"
 #include "Timer.hh"
-#include "Timer.hh"
 
 
 
-struct Blocker
+struct ReturningSystem
 {
   dzn::meta dzn_meta;
   dzn::runtime& dzn_rt;
   dzn::locator const& dzn_locator;
 
 
-  ::BlockerController controller;
-  ::Piston piston;
-  ::Button button;
-  ::Timer pistonTimer;
-  ::Timer timeoutTimer;
+  ::Returner returner;
+  ::DiskDetector sensor;
+  ::Belt firstBelt;
+  ::Belt elevatedBelt;
+  ::Timer timer;
 
-  ::IBlocker& blocker;
+  ::IReturner& returningSystem;
 
 
-  Blocker(const dzn::locator&);
+  ReturningSystem(const dzn::locator&);
   void check_bindings() const;
   void dump_tree(std::ostream& os=std::clog) const;
 };
 
-#endif // BLOCKER_HH
+#endif // RETURNINGSYSTEM_HH
 
 /***********************************  SYSTEM  ***********************************/
 

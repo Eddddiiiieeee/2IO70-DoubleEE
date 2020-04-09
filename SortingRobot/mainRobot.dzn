@@ -1,3 +1,4 @@
+import interfaces.dzn;
 import sortingSystem.dzn;
 import takingSystem.dzn;
 import returnSystem.dzn;
@@ -9,16 +10,26 @@ component Robot {
 	
 	system {
 		RaspberryPi controller;
-		SortingSystem sorter;
 		TakingSystem taker;
+		SortingSystem sorter;
 		ReturningSystem returner;
 		Timer heartbeatClock;
 		
+		Timer heartbeat1;
+		Timer heartbeat2;
+		Timer heartbeat3;
+		Timer heartbeat4;
+		
 		robot <=> controller.controller;
-		controller.sorting <=> sorter.sortingSystem;
 		controller.taker <=> taker.takingSystem;
+		controller.sorting <=> sorter.sortingSystem;
 		controller.returner <=> returner.returningSystem;
 		controller.heartbeatClock <=> heartbeatClock.iTimer;
+		
+		controller.heartbeat1 <=> heartbeat1.iTimer;
+		controller.heartbeat2 <=> heartbeat2.iTimer;
+		controller.heartbeat3 <=> heartbeat3.iTimer;
+		controller.heartbeat4 <=> heartbeat4.iTimer;
 	}
 }
 
@@ -30,54 +41,228 @@ component RaspberryPi {
 	requires IReturner returner;
 	requires ITimer heartbeatClock;
 	
+	requires ITimer heartbeat1;
+	requires ITimer heartbeat2;
+	requires ITimer heartbeat3;
+	requires ITimer heartbeat4;
+	
 	behaviour {
-		enum State {Idle, Running};
+		enum State {Idle, Running, Error};
 		State state = State.Idle;
 		
 		on controller.respondDiskCounters(), 
 		   controller.respondDisksTaken(),
 		   controller.error_in(),
-		   controller.heartbeat1(),
-		   controller.heartbeat2(),
-		   controller.heartbeat3(),
-		   controller.heartbeat4(),
 		   controller.tookDisk_in(): {}
-		
+
 		[state.Idle] {
 			on controller.start(): {
 				state = State.Running;
 				sorting.start();
-				taker.start();
+				taker.start(); // TODO: C++ On / Off toggle?
 				returner.start();
+				heartbeatClock.cancel();
 				heartbeatClock.start($5000$); // 5 second heartbeat
 			}
+			on heartbeatClock.timeout(): {}
 			on controller.stop(): illegal;
 			on controller.emergencyStop(): {}
+			on controller.reboot(): {}
+			on controller.heartbeat1(),
+		   	   controller.heartbeat2(),
+		       controller.heartbeat3(),
+		       controller.heartbeat4(): {}
+		    on heartbeat1.timeout(), 
+			   heartbeat2.timeout(), 
+			   heartbeat3.timeout(), 
+			   heartbeat4.timeout():{}
 		}
 		[state.Running] {
 			on controller.stop(), controller.emergencyStop(): {
 				state = State.Idle;
 				sorting.stop();
-				taker.stop();
+				taker.stop(); 
 				returner.stop();
 				heartbeatClock.cancel();
+				heartbeat1.cancel();
+				heartbeat2.cancel();
+				heartbeat3.cancel();
+				heartbeat4.cancel();
 			}
 			
-			on sorting.error(), taker.error(), returner.error(): {
-				state = State.Idle; // TODO: WORK ON ERROR CODES AND SEVERITY OF IT SO WE DON'T STOP THE WHOLE FACTORY
-				controller.emergency();
-				sorting.stop();
-				taker.stop();
-				returner.stop();
-				heartbeatClock.cancel();
+			on sorting.error(): {
+				ISorter.SortingErrors sortError = sorting.getErrorState();
+				if (sortError == ISorter.SortingErrors.S000) {
+				// Sorting Piston stuck RETRACTED
+					controller.S000();
+					controller.error_out();
+					state = State.Error;
+					sorting.stop();
+					taker.stop(); 
+					returner.stop();
+				} else if (sortError == ISorter.SortingErrors.S010) { 
+				// Sorting Piston stuck EXTENDED
+					controller.S010();
+					controller.error_out();
+					state = State.Error;
+					sorting.stop();
+					taker.stop(); 
+					returner.stop();
+				} else if (sortError == ISorter.SortingErrors.S100) {
+				// Sorting belt error
+					controller.S100();
+					controller.error_out();
+					state = State.Error;
+					sorting.stop();
+					taker.stop(); 
+					returner.stop();
+				} else {}
 			}
+			
+			on taker.error(): {
+				ITaking.TakingErrors takeError = taker.getErrorState();
+				if (takeError == ITaking.TakingErrors.T010) { 
+				// Piston blocking factory. Emergency!
+					controller.T010();
+					state = State.Idle;
+					controller.emergency();
+					sorting.stop();
+					taker.stop(); 
+					returner.stop();
+				} else if (takeError == ITaking.TakingErrors.T000) {
+				// Piston does not block factory, reboot.
+					controller.T000();
+					state = State.Error;
+					sorting.stop();
+					taker.stop();
+					returner.stop();
+					//heartbeatClock.cancel();
+					controller.error_out();
+				} else {}
+			}
+			
+			on returner.error(): {
+				IReturner.ReturnerErrors returnError = returner.getErrorState();
+				if (returnError == IReturner.ReturnerErrors.R100) { 
+				// 1st belt error
+					controller.R100();
+					controller.error_out();
+					state = State.Error;
+					sorting.stop();
+					taker.stop(); 
+					returner.stop();
+				} else if (returnError == IReturner.ReturnerErrors.R101) { 
+				// 2nd belt error (elevator)
+					controller.R101();
+					controller.error_out();
+					state = State.Error;
+					sorting.stop();
+					taker.stop(); 
+					returner.stop();
+				} else if (returnError == IReturner.ReturnerErrors.R290) { 
+				// Timeout error
+					controller.R290();
+					controller.error_out();
+					state = State.Error;
+					sorting.stop();
+					taker.stop(); 
+					returner.stop();
+				} else {}
+			}
+			
+			// Disk passed sensor without any left in queue
+			on returner.warning(): {controller.R200();} // C++ TODO: implement this in C++
 			
 			on heartbeatClock.timeout(): {
 				heartbeatClock.start($5000$);
 				controller.heartbeat();
 			}
 			
+			on sorting.returnDisk(): { // inter-subsystem communication
+				returner.addDisk();
+			}
+			
+			on taker.tookDisk(): {
+				controller.tookDisk_out();
+			}
+			
+			on controller.resumeTaking(): {
+				ITaking.TakingErrors takeState = taker.getErrorState();
+				if (takeState == ITaking.TakingErrors.none) {
+					taker.start();
+				}
+			}
+		
+			on controller.pauseTaking(): {
+				ITaking.TakingErrors takeState = taker.getErrorState();
+				if (takeState == ITaking.TakingErrors.none) {
+					taker.start();
+				}
+			}
+			
+			on controller.heartbeat1(): {
+				heartbeat1.cancel();
+				heartbeat1.start($5000$);
+			}
+			on controller.heartbeat2(): {
+				heartbeat2.cancel();
+				heartbeat2.start($5000$);
+			}
+			on controller.heartbeat3(): {
+				heartbeat3.cancel();
+				heartbeat3.start($5000$);
+			}
+			on controller.heartbeat4(): {
+				heartbeat4.cancel();
+				heartbeat4.start($5000$);
+			}
+			
+			on heartbeat1.timeout(), 
+			   heartbeat2.timeout(), 
+			   heartbeat3.timeout(), 
+			   heartbeat4.timeout():{} // C++ Implementation
+			
 			on controller.start(): illegal;
+			on controller.reboot(): {}
+		}
+		[state.Error] {
+			on controller.stop(), controller.emergencyStop(): {
+				state = State.Idle;
+				heartbeatClock.cancel();
+			}
+			
+			on controller.reboot(): {
+				state = State.Running;
+				//controller.requestDisksTaken();
+				sorting.start();
+				taker.start();
+				returner.start();
+				heartbeatClock.cancel();
+				heartbeatClock.start($5000$);
+			}
+			
+			on controller.start(): illegal;
+			on heartbeatClock.timeout(): {}
+			on controller.heartbeat1(): {
+				heartbeat1.cancel();
+				heartbeat1.start($5000$);
+			}
+			on controller.heartbeat2(): {
+				heartbeat2.cancel();
+				heartbeat2.start($5000$);
+			}
+			on controller.heartbeat3(): {
+				heartbeat3.cancel();
+				heartbeat3.start($5000$);
+			}
+			on controller.heartbeat4(): {
+				heartbeat4.cancel();
+				heartbeat4.start($5000$);
+			}
+			on heartbeat1.timeout(), 
+			   heartbeat2.timeout(), 
+			   heartbeat3.timeout(), 
+			   heartbeat4.timeout():{}
 		}
 	}
 }
