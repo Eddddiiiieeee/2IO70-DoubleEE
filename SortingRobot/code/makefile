@@ -1,9 +1,9 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -I$(RUNTIME) -I$(SRC) -lwiringpi -lrt
+CXXFLAGS = -std=c++11 -I$(RUNTIME) -I$(SRC) -lwiringPi -lrt
 CPPFLAGS = -I$(SRC) -I$(RUNTIME)
 LDFLAGS = -lpthread
 TARGET = dznpi
-SRC = ./src 
+SRC = ./src
 RUNTIME = ./lib
 SRCS = $(wildcard $(SRC)/*.cc)
 SRCS += $(wildcard $(RUNTIME)/*.cc)
@@ -13,7 +13,7 @@ all:
 	make $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) 
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(TARGET)
