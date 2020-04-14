@@ -15,10 +15,10 @@ class Timer : public skel::Timer {
     void iTimer_cancel();
 
     unsigned targetTime;
-    
+
 public:
     Timer(const dzn::locator& loc);
     void checkTimer();
-}
+};
 
 #endif 

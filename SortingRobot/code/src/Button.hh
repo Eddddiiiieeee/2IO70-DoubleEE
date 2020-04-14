@@ -14,6 +14,6 @@ public:
     Button(const dzn::locator& loc);
     void setPin(int bcmValue);
     void checkSensor();
-}
+};
 
 #endif

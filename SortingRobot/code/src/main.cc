@@ -17,25 +17,25 @@
 
 // PINS ARE SET TO BCM
 /********** OUTPUT PINS **********/
-const int PIN_PISTON_TAKE = -1;
-const int PIN_PISTON_SORT = -1;
-const int PIN_MOTOR_SORT = -1;
-const int PIN_MOTOR1_RETURN = -1;
-const int PIN_MOTOR2_RETURN = -1;
+const int PIN_PISTON_TAKE = 9;
+const int PIN_PISTON_SORT = 26;
+const int PIN_MOTOR_SORT = 17;
+const int PIN_MOTOR1_RETURN = 18;
+const int PIN_MOTOR2_RETURN = 18;
 /*********************************/
 
 // PINS ARE SET TO BCM
 /********** INPUT PINS **********/
-const int PIN_SENSOR_COLOR = -1;
-const int PIN_SENSOR_TAKE_DETECT = -1;
-const int PIN_SENSOR_SORT_DETECT = -1;
-const int PIN_SENSOR_RETURN_DETECT = -1;
+const int PIN_SENSOR_COLOR = 25;
+const int PIN_SENSOR_TAKE_DETECT = 2;
+const int PIN_SENSOR_SORT_DETECT = 23;
+const int PIN_SENSOR_RETURN_DETECT = 24;
 
-const int PIN_ERROR_TAKE_PISTON = -1;
-const int PIN_ERROR_SORT_BELT = -1;
-const int PIN_ERROR_SORT_PISTON = -1;
-const int PIN_ERROR_RETURN_BELT1 = -1;
-const int PIN_ERROR_RETURN_BELT2 = -1;
+const int PIN_ERROR_TAKE_PISTON = 12;
+const int PIN_ERROR_SORT_BELT = 9;
+const int PIN_ERROR_SORT_PISTON = 11;
+const int PIN_ERROR_RETURN_BELT1 = 16;
+const int PIN_ERROR_RETURN_BELT2 = 22;
 /********************************/
 
 /********** MQTT **********/
