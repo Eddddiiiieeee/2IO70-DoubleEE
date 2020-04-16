@@ -70,7 +70,7 @@ component Returner {
 	behaviour {
 		IReturner.State state = IReturner.State.Stopped;
 		IReturner.ReturnerErrors errorState = IReturner.ReturnerErrors.none;
-		ITimer.unsigned_integer returningTime = $30000$;
+		ITimer.integer returningTime = $30000$;
 		subint diskQueue {0..63};
 		diskQueue queue = 0;
 		

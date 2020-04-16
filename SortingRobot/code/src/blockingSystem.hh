@@ -62,7 +62,7 @@ struct IBlocker
 
   struct
   {
-    std::function< void(unsigned int,unsigned int)> trigger;
+    std::function< void(int,int)> trigger;
     std::function< void()> stop;
     std::function< ::IBlocker::BlockerErrors::type()> getErrorState;
   } in;
@@ -288,7 +288,7 @@ namespace skel {
 
 
     {
-      iTimer.in.start = [&](unsigned int milliseconds){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->iTimer) = false; return iTimer_start(milliseconds);}, this->iTimer.meta, "start");};
+      iTimer.in.start = [&](int milliseconds){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->iTimer) = false; return iTimer_start(milliseconds);}, this->iTimer.meta, "start");};
       iTimer.in.cancel = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->iTimer) = false; return iTimer_cancel();}, this->iTimer.meta, "cancel");};
 
 
@@ -303,7 +303,7 @@ namespace skel {
       return m.stream_members(os);
     }
     private:
-    virtual void iTimer_start (unsigned int milliseconds) = 0;
+    virtual void iTimer_start (int milliseconds) = 0;
     virtual void iTimer_cancel () = 0;
 
   };
@@ -367,7 +367,7 @@ struct BlockerController
     return os << "[" << m.pistonExtended <<", " << m.errorState <<", " << m.state <<"]" ;
   }
   private:
-  void controller_trigger(unsigned int extendTime,unsigned int timeoutTime);
+  void controller_trigger(int extendTime,int timeoutTime);
   void controller_stop();
   ::IBlocker::BlockerErrors::type controller_getErrorState();
   void sensor_triggered();

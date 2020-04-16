@@ -74,10 +74,10 @@ component Sorter {
 	
 	
 	behaviour { // NOTE: All time is in MILLISECONDS
-		IBlocker.unsigned_integer extendTime = $5000$; // Time it takes to PUSH disk into container
-		IBlocker.unsigned_integer timeoutTime = $2500$; // Timeout time for piston. If piston does not extend in timeout time, ERROR
-		ITimer.unsigned_integer diskScanInterval = $5000$; // Time it takes to SCAN disk
-		//ITimer.unsigned_integer diskTime = $500$;
+		IBlocker.integer extendTime = $5000$; // Time it takes to PUSH disk into container
+		IBlocker.integer timeoutTime = $2500$; // Timeout time for piston. If piston does not extend in timeout time, ERROR
+		ITimer.integer diskScanInterval = $5000$; // Time it takes to SCAN disk
+		//ITimer.integer diskTime = $500$;
 		//subint diskQueue {0..5}; // I highly doubt you can fit 5 disks between the two sensors...
 		//diskQueue queue = 0;
 		

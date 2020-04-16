@@ -58,8 +58,8 @@ component Taker {
 	requires IBasicSensor diskDetector;
 	
 	behaviour {
-		IBlocker.unsigned_integer extendTime = $2500$;
-		IBlocker.unsigned_integer timeoutTime = $10000$;
+		IBlocker.integer extendTime = $2500$;
+		IBlocker.integer timeoutTime = $10000$;
 		ITaking.State state = ITaking.State.Stopped;
 		
 		ITaking.TakingErrors errorState = ITaking.TakingErrors.none;

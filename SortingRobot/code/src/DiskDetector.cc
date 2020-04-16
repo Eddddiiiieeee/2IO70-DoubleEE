@@ -6,8 +6,7 @@
 #include <wiringPi.h>
 
 DiskDetector::DiskDetector(const dzn::locator &loc) : skel::DiskDetector(loc) {
-    pin = 0;
-    activated = false;
+    
 }
 
 void DiskDetector::setPin(int bcmValue) {

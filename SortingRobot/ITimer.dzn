@@ -1,6 +1,6 @@
 interface ITimer {
-  extern unsigned_integer $unsigned int$; // source code data type will be unsigned int
-  in void start(unsigned_integer milliseconds);
+  extern integer $int$; // source code data type will be int
+  in void start(integer milliseconds);
   in void cancel();
   out void timeout();
 

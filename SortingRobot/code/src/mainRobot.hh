@@ -158,7 +158,7 @@ namespace skel {
 
 
     {
-      iTimer.in.start = [&](unsigned int milliseconds){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->iTimer) = false; return iTimer_start(milliseconds);}, this->iTimer.meta, "start");};
+      iTimer.in.start = [&](int milliseconds){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->iTimer) = false; return iTimer_start(milliseconds);}, this->iTimer.meta, "start");};
       iTimer.in.cancel = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->iTimer) = false; return iTimer_cancel();}, this->iTimer.meta, "cancel");};
 
 
@@ -173,7 +173,7 @@ namespace skel {
       return m.stream_members(os);
     }
     private:
-    virtual void iTimer_start (unsigned int milliseconds) = 0;
+    virtual void iTimer_start (int milliseconds) = 0;
     virtual void iTimer_cancel () = 0;
 
   };

@@ -34,7 +34,7 @@ BlockerController::BlockerController(const dzn::locator& dzn_locator)
 {
   dzn_rt.performs_flush(this) = true;
 
-  controller.in.trigger = [&](unsigned int extendTime,unsigned int timeoutTime){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->controller) = false; return controller_trigger(extendTime,timeoutTime);}, this->controller.meta, "trigger");};
+  controller.in.trigger = [&](int extendTime,int timeoutTime){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->controller) = false; return controller_trigger(extendTime,timeoutTime);}, this->controller.meta, "trigger");};
   controller.in.stop = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->controller) = false; return controller_stop();}, this->controller.meta, "stop");};
   sensor.out.triggered = [&](){return dzn::call_out(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->sensor) = false; return sensor_triggered();}, this->sensor.meta, "triggered");};
   pistonTimer.out.timeout = [&](){return dzn::call_out(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->pistonTimer) = false; return pistonTimer_timeout();}, this->pistonTimer.meta, "timeout");};
@@ -47,7 +47,7 @@ BlockerController::BlockerController(const dzn::locator& dzn_locator)
 
 }
 
-void BlockerController::controller_trigger(unsigned int extendTime,unsigned int timeoutTime)
+void BlockerController::controller_trigger(int extendTime,int timeoutTime)
 {
   if (state == ::BlockerController::State::Retracted) 
   {

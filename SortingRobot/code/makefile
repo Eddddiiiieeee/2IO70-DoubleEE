@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -I$(RUNTIME) -I$(SRC) -lwiringPi -lrt
+CXXFLAGS = -std=c++11 -I$(RUNTIME) -I$(SRC) -I/usr/local/include -L/usr/local/lib -lwiringPi -lrt -lmosquitto
 CPPFLAGS = -I$(SRC) -I$(RUNTIME)
 LDFLAGS = -lpthread
 TARGET = dznpi

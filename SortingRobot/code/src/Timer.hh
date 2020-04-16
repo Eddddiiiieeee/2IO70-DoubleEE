@@ -11,7 +11,7 @@
 #include "ITimer.hh"
 
 class Timer : public skel::Timer {
-    void iTimer_start(unsinged int milliseconds);
+    void iTimer_start(int milliseconds);
     void iTimer_cancel();
 
     unsigned targetTime;

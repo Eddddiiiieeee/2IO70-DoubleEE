@@ -7,9 +7,9 @@ import ITimer.dzn;
  * @throws error() if timeoutTime has passed and the piston did not extend (sensor reading)
  */
 interface IBlocker {
-	extern unsigned_integer $unsigned int$;
+	extern integer $int$;
 	enum BlockerErrors {none , pistonExtended, pistonRetracted};
-	in void trigger(unsigned_integer extendTime, unsigned_integer timeoutTime);	
+	in void trigger(integer extendTime, integer timeoutTime);	
 	in void stop();
 	out void error();
 	in BlockerErrors getErrorState();
@@ -68,8 +68,8 @@ component BlockerController {
 	requires ITimer timeout;
 	
 	behaviour {
-		//ITimer.unsigned_integer extendTime = $2500$;
-		//ITimer.unsigned_integer timeoutTime = $10000$;
+		//ITimer.integer extendTime = $2500$;
+		//ITimer.integer timeoutTime = $10000$;
 		bool pistonExtended = false;
 		enum State {Retracted, Extended, Error};
 		IBlocker.BlockerErrors errorState = IBlocker.BlockerErrors.none;

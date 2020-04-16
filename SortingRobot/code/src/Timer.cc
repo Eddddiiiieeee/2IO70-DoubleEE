@@ -20,7 +20,7 @@ Timer::Timer(const dzn::locator& loc) : skel::Timer(loc) {
     targetTime = 0;
 }
 
-void Timer::iTimer_start(unsinged int milliseconds) {
+void Timer::iTimer_start(int milliseconds) {
     targetTime = millis() + milliseconds;
 }
 

@@ -51,7 +51,7 @@ component BeltController {
 	
 	behaviour {
 		enum State {Idle, Running, Error};
-		ITimer.unsigned_integer interval = $10000$;
+		ITimer.integer interval = $10000$;
 		State state = State.Idle;
 		
 		[state.Idle] {
