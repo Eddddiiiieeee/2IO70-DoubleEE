@@ -1,29 +1,27 @@
 #include "ColorSensor.hh"
-#include "interfaces.hh"
 
 #include <dzn/locator.hh>
 #include <dzn/runtime.hh>
 
 #include <wiringPi.h>
 
-ColorSensor::ColorSensor(const dzn::locator& loc) : skel::Button(loc) {
-    pin = -1;
-    activated = false;
+ColorSensor::ColorSensor(const dzn::locator& loc) : skel::ColorSensor(loc) {
+
 }
 
-ColorSensor::colorSensor_activate() {
+void ColorSensor::colorSensor_activate() {
     activated = true;
 }
 
-ColorSensor::colorSensor_deactivate() {
+void ColorSensor::colorSensor_deactivate() {
     activated = false;
 }
 
-ColorSensor::setPin(int bcmValue) {
+void ColorSensor::setPin(int bcmValue) {
     pin = bcmValue;
 }
 
-ColorSensor::checkSensor() {
+void ColorSensor::checkSensor() {
     if (!activated) {
         return;
     }

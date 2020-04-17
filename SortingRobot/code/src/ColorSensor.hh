@@ -2,14 +2,13 @@
 #define COLORSENSOR_HH
 
 #include "interfaces.hh"
-#include "sortingSystem.hh"
 
 class ColorSensor : public skel::ColorSensor {
     void colorSensor_activate();
     void colorSensor_deactivate();
 
-    int pin;
-    bool activated;
+    int pin = 0;
+    bool activated = false;
 
 public:
     ColorSensor(const dzn::locator& loc);

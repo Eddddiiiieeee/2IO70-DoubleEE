@@ -179,8 +179,3 @@ component Sorter {
 		}
 	}
 }
-
-component ColorSensor {
-	provides IBasicSensor colorSensor;
-	// Manual implementation in C++
-}

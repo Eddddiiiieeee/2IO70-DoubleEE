@@ -130,59 +130,6 @@ namespace skel {
 
 /***********************************  FOREIGN  **********************************/
 /***********************************  FOREIGN  **********************************/
-#ifndef SKEL_TIMER_HH
-#define SKEL_TIMER_HH
-
-#include <dzn/locator.hh>
-#include <dzn/runtime.hh>
-
-#include "ITimer.hh"
-
-
-
-namespace skel {
-  struct Timer
-  {
-    dzn::meta dzn_meta;
-    dzn::runtime& dzn_rt;
-    dzn::locator const& dzn_locator;
-    ::ITimer iTimer;
-
-
-    Timer(const dzn::locator& dzn_locator)
-    : dzn_meta{"","Timer",0,0,{},{},{[this]{iTimer.check_bindings();}}}
-    , dzn_rt(dzn_locator.get<dzn::runtime>())
-    , dzn_locator(dzn_locator)
-
-    , iTimer({{"iTimer",this,&dzn_meta},{"",0,0}})
-
-
-    {
-      iTimer.in.start = [&](int milliseconds){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->iTimer) = false; return iTimer_start(milliseconds);}, this->iTimer.meta, "start");};
-      iTimer.in.cancel = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->iTimer) = false; return iTimer_cancel();}, this->iTimer.meta, "cancel");};
-
-
-    }
-    virtual ~ Timer() {}
-    virtual std::ostream& stream_members(std::ostream& os) const { return os; }
-    void check_bindings() const;
-    void dump_tree(std::ostream& os) const;
-    void set_state(std::map<std::string,std::map<std::string,std::string> >){}
-    void set_state(std::map<std::string,std::string>_alist){}
-    friend std::ostream& operator << (std::ostream& os, const Timer& m)  {
-      return m.stream_members(os);
-    }
-    private:
-    virtual void iTimer_start (int milliseconds) = 0;
-    virtual void iTimer_cancel () = 0;
-
-  };
-}
-
-#endif // TIMER_HH
-
-/***********************************  FOREIGN  **********************************/
-/***********************************  FOREIGN  **********************************/
 #ifndef SKEL_COLORSENSOR_HH
 #define SKEL_COLORSENSOR_HH
 
@@ -233,6 +180,59 @@ namespace skel {
 }
 
 #endif // COLORSENSOR_HH
+
+/***********************************  FOREIGN  **********************************/
+/***********************************  FOREIGN  **********************************/
+#ifndef SKEL_TIMER_HH
+#define SKEL_TIMER_HH
+
+#include <dzn/locator.hh>
+#include <dzn/runtime.hh>
+
+#include "ITimer.hh"
+
+
+
+namespace skel {
+  struct Timer
+  {
+    dzn::meta dzn_meta;
+    dzn::runtime& dzn_rt;
+    dzn::locator const& dzn_locator;
+    ::ITimer iTimer;
+
+
+    Timer(const dzn::locator& dzn_locator)
+    : dzn_meta{"","Timer",0,0,{},{},{[this]{iTimer.check_bindings();}}}
+    , dzn_rt(dzn_locator.get<dzn::runtime>())
+    , dzn_locator(dzn_locator)
+
+    , iTimer({{"iTimer",this,&dzn_meta},{"",0,0}})
+
+
+    {
+      iTimer.in.start = [&](int milliseconds){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->iTimer) = false; return iTimer_start(milliseconds);}, this->iTimer.meta, "start");};
+      iTimer.in.cancel = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->iTimer) = false; return iTimer_cancel();}, this->iTimer.meta, "cancel");};
+
+
+    }
+    virtual ~ Timer() {}
+    virtual std::ostream& stream_members(std::ostream& os) const { return os; }
+    void check_bindings() const;
+    void dump_tree(std::ostream& os) const;
+    void set_state(std::map<std::string,std::map<std::string,std::string> >){}
+    void set_state(std::map<std::string,std::string>_alist){}
+    friend std::ostream& operator << (std::ostream& os, const Timer& m)  {
+      return m.stream_members(os);
+    }
+    private:
+    virtual void iTimer_start (int milliseconds) = 0;
+    virtual void iTimer_cancel () = 0;
+
+  };
+}
+
+#endif // TIMER_HH
 
 /***********************************  FOREIGN  **********************************/
 /********************************** COMPONENT *********************************/

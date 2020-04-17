@@ -7,8 +7,8 @@ class Button : public skel::Button {
     void sensor_activate();
     void sensor_deactivate();
 
-    int pin;
-    bool activated;
+    int pin = 0;
+    bool activated = false;
 
 public:
     Button(const dzn::locator& loc);

@@ -264,6 +264,59 @@ namespace skel {
 
 /***********************************  FOREIGN  **********************************/
 /***********************************  FOREIGN  **********************************/
+#ifndef SKEL_COLORSENSOR_HH
+#define SKEL_COLORSENSOR_HH
+
+#include <dzn/locator.hh>
+#include <dzn/runtime.hh>
+
+#include "interfaces.hh"
+
+
+
+namespace skel {
+  struct ColorSensor
+  {
+    dzn::meta dzn_meta;
+    dzn::runtime& dzn_rt;
+    dzn::locator const& dzn_locator;
+    ::IBasicSensor colorSensor;
+
+
+    ColorSensor(const dzn::locator& dzn_locator)
+    : dzn_meta{"","ColorSensor",0,0,{},{},{[this]{colorSensor.check_bindings();}}}
+    , dzn_rt(dzn_locator.get<dzn::runtime>())
+    , dzn_locator(dzn_locator)
+
+    , colorSensor({{"colorSensor",this,&dzn_meta},{"",0,0}})
+
+
+    {
+      colorSensor.in.activate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->colorSensor) = false; return colorSensor_activate();}, this->colorSensor.meta, "activate");};
+      colorSensor.in.deactivate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->colorSensor) = false; return colorSensor_deactivate();}, this->colorSensor.meta, "deactivate");};
+
+
+    }
+    virtual ~ ColorSensor() {}
+    virtual std::ostream& stream_members(std::ostream& os) const { return os; }
+    void check_bindings() const;
+    void dump_tree(std::ostream& os) const;
+    void set_state(std::map<std::string,std::map<std::string,std::string> >){}
+    void set_state(std::map<std::string,std::string>_alist){}
+    friend std::ostream& operator << (std::ostream& os, const ColorSensor& m)  {
+      return m.stream_members(os);
+    }
+    private:
+    virtual void colorSensor_activate () = 0;
+    virtual void colorSensor_deactivate () = 0;
+
+  };
+}
+
+#endif // COLORSENSOR_HH
+
+/***********************************  FOREIGN  **********************************/
+/***********************************  FOREIGN  **********************************/
 #ifndef SKEL_TIMER_HH
 #define SKEL_TIMER_HH
 
@@ -379,59 +432,6 @@ struct Sorter
 #endif // SORTER_HH
 
 /********************************** COMPONENT *********************************/
-/***********************************  FOREIGN  **********************************/
-#ifndef SKEL_COLORSENSOR_HH
-#define SKEL_COLORSENSOR_HH
-
-#include <dzn/locator.hh>
-#include <dzn/runtime.hh>
-
-#include "interfaces.hh"
-
-
-
-namespace skel {
-  struct ColorSensor
-  {
-    dzn::meta dzn_meta;
-    dzn::runtime& dzn_rt;
-    dzn::locator const& dzn_locator;
-    ::IBasicSensor colorSensor;
-
-
-    ColorSensor(const dzn::locator& dzn_locator)
-    : dzn_meta{"","ColorSensor",0,0,{},{},{[this]{colorSensor.check_bindings();}}}
-    , dzn_rt(dzn_locator.get<dzn::runtime>())
-    , dzn_locator(dzn_locator)
-
-    , colorSensor({{"colorSensor",this,&dzn_meta},{"",0,0}})
-
-
-    {
-      colorSensor.in.activate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->colorSensor) = false; return colorSensor_activate();}, this->colorSensor.meta, "activate");};
-      colorSensor.in.deactivate = [&](){return dzn::call_in(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->colorSensor) = false; return colorSensor_deactivate();}, this->colorSensor.meta, "deactivate");};
-
-
-    }
-    virtual ~ ColorSensor() {}
-    virtual std::ostream& stream_members(std::ostream& os) const { return os; }
-    void check_bindings() const;
-    void dump_tree(std::ostream& os) const;
-    void set_state(std::map<std::string,std::map<std::string,std::string> >){}
-    void set_state(std::map<std::string,std::string>_alist){}
-    friend std::ostream& operator << (std::ostream& os, const ColorSensor& m)  {
-      return m.stream_members(os);
-    }
-    private:
-    virtual void colorSensor_activate () = 0;
-    virtual void colorSensor_deactivate () = 0;
-
-  };
-}
-
-#endif // COLORSENSOR_HH
-
-/***********************************  FOREIGN  **********************************/
 /***********************************  SYSTEM  ***********************************/
 #ifndef SORTINGSYSTEM_HH
 #define SORTINGSYSTEM_HH

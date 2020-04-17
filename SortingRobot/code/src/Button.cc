@@ -7,23 +7,22 @@
 #include <wiringPi.h>
 
 Button::Button(const dzn::locator& loc) : skel::Button(loc) {
-    pin = -1;
-    activated = false;
+    
 }
 
-Button::sensor_activate() {
+void Button::sensor_activate() {
     activated = true;
 }
 
-Button::sensor_deactivate() {
+void Button::sensor_deactivate() {
     activated = false;
 }
 
-Button::setPin(int bcmValue) {
+void Button::setPin(int bcmValue) {
     pin = bcmValue;
 }
 
-Button::checkSensor() {
+void Button::checkSensor() {
     if (!activated) {
         return;
     }

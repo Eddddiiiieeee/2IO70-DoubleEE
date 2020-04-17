@@ -45,8 +45,8 @@ const int PORT = 1883;
 const int KEEPALIVE = 60;
 
 int ROBOT_NUMBER;
-std::string INPUT_CHANNEL = "factory/robotX/in";
-std::string OUTPUT_CHANNEL = "factory/robotX/out";
+std::string INPUT_CHANNEL = "factory/robot/in";
+std::string OUTPUT_CHANNEL = "factory/robot/out";
 
 const char* MSG_START = "start";
 const char* MSG_STOP = "stop";
@@ -70,14 +70,24 @@ bool SHUTDOWN = false;
 /********** FUNCTION DECLARATIONS **********/
 void setup_pins();
 bool setup_mqtt();
-void shutdown();
+//void shutdown();
 void destroy_mqtt();
 bool preCheck();
 void respondDisksTaken(int);
 bool canTakeDisk();
 void recovery();
+void recalculateData(char*);
 /*******************************************/
 
+
+void shutdown(int signum) {
+    std::cout << "Shutting Down..." << std::endl;
+
+    destroy_mqtt();
+    sys->robot.in.stop();
+
+    exit(signum);
+}
 
 
 int main() {
@@ -92,7 +102,7 @@ int main() {
     setup_pins();
     if(setup_mqtt()) return 1;
 
-    std::cout >> "Commencing precheck sequence...\n";
+    std::cout << "Commencing precheck sequence...\n";
     if (!preCheck()) {
         std::cout << "Pre Check Error :: One of the sensors give incorrect readings before startup: \n";
         std::cout << "\t Color Sensor: " << digitalRead(PIN_SENSOR_COLOR) << ". Should be: 0\n";
@@ -148,7 +158,7 @@ int main() {
     system.controller.controller.out.heartbeat = []{
         mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_HEARTBEAT.length(), MSG_OUT_HEARTBEAT.c_str(), 0, false); 
     };
-    system.controller.controller.out.tookDisk_Out = []{
+    system.controller.controller.out.tookDisk_out = []{
         DISK_COUNTER[ROBOT_NUMBER] += 1;
         mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_TOOK_DISK.length(), MSG_OUT_TOOK_DISK.c_str(), 0, false); 
     };
@@ -278,8 +288,8 @@ bool setup_mqtt() {
     std::cout << "Robot Number: ";
     std::cin >> ROBOT_NUMBER;
 
-    INPUT_CHANNEL.replace(13,1,1,std::to_string(ROBOT_NUMBER));
-    OUTPUT_CHANNEL.replace(13,1,1,std::to_string(ROBOT_NUMBER));
+    INPUT_CHANNEL.insert(13,std::to_string(ROBOT_NUMBER));
+    OUTPUT_CHANNEL.insert(13,std::to_string(ROBOT_NUMBER));
 
     MSG_OUT_HEARTBEAT.append(std::to_string(ROBOT_NUMBER));
     MSG_OUT_TOOK_DISK.append(std::to_string(ROBOT_NUMBER));
@@ -293,7 +303,7 @@ bool setup_mqtt() {
     // Callback message after recieving message from broker
     mosquitto_message_callback_set(mosq, [](mosquitto* _mosq, void* obj, const mosquitto_message* msg) {
         if (!msg->payloadlen) {
-            std::cout << "MQTT Error :: malformed message length received.\n");
+            std::cout << "MQTT Error :: malformed message length received.\n";
             return;
         }
 
@@ -347,8 +357,8 @@ bool setup_mqtt() {
                     std::cout << "MQTT Warning :: Robot number for requestDisksTaken out of bounds: " << payload << std::endl;
                 }
             } else if (strstr(payload, "respondDisksTaken") != NULL) {
-                if (strbrk(payload, (std::to_string(ROBOT_NUMBER)).c_str())) {
-                    recalculateData();
+                if (strpbrk(payload, (std::to_string(ROBOT_NUMBER)).c_str())) {
+                    recalculateData(payload);
                 }
             } else if (strstr(payload, "error") != NULL) {
                 std::cout << "Warning! A robot has encountered an error: " << payload << std::endl;
@@ -358,7 +368,7 @@ bool setup_mqtt() {
         }
     });
 
-    if (mosquitto_connect_asyn(mosq, HOST, PORT, KEEPALIVE) != MOSQ_ERR_SUCCESS) {
+    if (mosquitto_connect_async(mosq, HOST, PORT, KEEPALIVE) != MOSQ_ERR_SUCCESS) {
         std::cout << "MQTT ERROR: Could not connect..." << std::endl;
         return false;
     }
@@ -369,14 +379,7 @@ bool setup_mqtt() {
     return true;
 }
 
-void shutdown(int signum) {
-    std::cout << "Shutting Down..." << std::endl;
 
-    destroy_mqtt();
-    sys->robot.in.stop();
-
-    exit(signum);
-}
 
 void destroy_mqtt() {
     mosquitto_disconnect(mosq);
@@ -392,8 +395,8 @@ bool preCheck() {
         digitalRead(PIN_SENSOR_SORT_DETECT)     &&
         digitalRead(PIN_SENSOR_RETURN_DETECT)   &&
         !digitalRead(PIN_ERROR_TAKE_PISTON)     &&
-        !digitalRead(PIN_ERROR_SORT_PISTON)     &&
-    );
+        !digitalRead(PIN_ERROR_SORT_PISTON)
+        );
 }
 
 void respondDisksTaken(int robotNum) {
@@ -411,9 +414,9 @@ void respondDisksTaken(int robotNum) {
 }
 
 bool canTakeDisk() {
-    int min = DISKS_COUNTER[0];
+    int min = DISK_COUNTER[0];
     for (int i = 1; i < 4; i++) {
-        if (DISKS_COUNTER[i] < min) {
+        if (DISK_COUNTER[i] < min) {
             min = DISK_COUNTER[i];
         }
     }
