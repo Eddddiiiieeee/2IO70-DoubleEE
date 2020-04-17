@@ -71,7 +71,7 @@ bool communicate = true;
 /********** FUNCTION DECLARATIONS **********/
 void setup_pins();
 bool setup_mqtt();
-//void shutdown();
+void shutdown(int);
 void destroy_mqtt();
 bool preCheck();
 void respondDisksTaken(int);
@@ -79,19 +79,6 @@ bool canTakeDisk();
 void recovery();
 void recalculateData(char*);
 /*******************************************/
-
-
-void shutdown(int signum) {
-    std::cout << "Shutting Down..." << std::endl;
-
-    if (communicate) {
-        destroy_mqtt();
-    }
-
-    sys->robot.in.stop();
-
-    exit(signum);
-}
 
 
 int main() {
@@ -104,6 +91,7 @@ int main() {
     
     setup_pins();
 
+    // MQTT Initialization
     char input;
     std::cout << "Run Without MQTT? (y/n): ";
     std::cin >> input;
@@ -120,10 +108,15 @@ int main() {
         std::cout << "Invalid input... Defaulting to running with MQTT...\n";
     }
     
+
+
+    // Initially set all data of disks to 0
     DISK_COUNTER[0] = 0;
     DISK_COUNTER[1] = 0;
     DISK_COUNTER[2] = 0;
     DISK_COUNTER[3] = 0;
+
+
 
     // Set pins on corresponding sensors
     system.taker.blocker.button.setPin(PIN_ERROR_TAKE_PISTON);
@@ -139,6 +132,7 @@ int main() {
     system.returner.sensor.setPin(PIN_SENSOR_RETURN_DETECT);
 
 
+
     // Bind Motors and Pistons
     system.taker.blocker.piston.piston.in.extend = []{ digitalWrite(PIN_PISTON_TAKE, 1); };
     system.taker.blocker.piston.piston.in.retract = []{ digitalWrite(PIN_PISTON_TAKE, 0); };
@@ -152,6 +146,7 @@ int main() {
     system.returner.firstBelt.motor.motor.in.stop = []{ digitalWrite(PIN_MOTOR1_RETURN, 0); };
     system.returner.elevatedBelt.motor.motor.in.start = []{ digitalWrite(PIN_MOTOR2_RETURN, 1); };
     system.returner.elevatedBelt.motor.motor.in.start = []{ digitalWrite(PIN_MOTOR2_RETURN, 0); };
+
 
     // Bind RaspberryPi ports
     system.robot.out.emergency = []{
@@ -194,6 +189,8 @@ int main() {
         }
     };
 
+
+
     // Binding error codes
     system.controller.controller.out.T010 = []{
         std::cout << "Main Robot CRITICAL ERROR :: T010 - Taking System: piston blocking Factory Belt. Timer timed out. Alerting fellow bots...\n";
@@ -223,6 +220,8 @@ int main() {
         std::cout << "Main Robot Warning :: R200 - Returning System: disk returned that was not accounted from the Sorting System...\n";
     };
 
+
+
     // Heartbeat Warning Messages
     system.controller.heartbeat1.out.timeout = []{
         std::cout << "Robot Communication Warning :: Heartbeat failure from robot 1. Failure to recieve heartbeat from robot 1 within 5 seconds...\n";
@@ -237,12 +236,17 @@ int main() {
         std::cout << "Robot Communication Warning :: Heartbeat failure from robot 4. Failure to recieve heartbeat from robot 1 within 5 seconds...\n";
     };
 
+
+
+    // Reset data on reboot
     system.controller.controller.in.reboot = []{
         DISK_COUNTER[0] = 0;
         DISK_COUNTER[1] = 0;
         DISK_COUNTER[2] = 0;
         DISK_COUNTER[3] = 0;
     };
+
+
 
     std::cout << "Checking Dezyne Bindings...\n";
     system.check_bindings();
@@ -259,7 +263,7 @@ int main() {
         std::cout << "\t Return Disk Detector: " << digitalRead(PIN_SENSOR_RETURN_DETECT) << ". Should be: 1\n";
         std::cout << "\t Taker Piston Detector: " << digitalRead(PIN_ERROR_TAKE_PISTON) << ". Should be: 0\n";
         std::cout << "\t Sorting Piston Detector: " << digitalRead(PIN_ERROR_SORT_PISTON) << ". Should be: 0\n";
-        shutdown();
+        destroy_mqtt();
         return 1;
     }
     
@@ -438,7 +442,17 @@ bool setup_mqtt() {
     return true;
 }
 
+void shutdown(int signum) {
+    std::cout << "Shutting Down..." << std::endl;
 
+    if (communicate) {
+        destroy_mqtt();
+    }
+
+    sys->robot.in.stop();
+
+    exit(signum);
+}
 
 void destroy_mqtt() {
     mosquitto_disconnect(mosq);
