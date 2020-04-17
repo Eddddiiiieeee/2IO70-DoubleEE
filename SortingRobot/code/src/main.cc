@@ -198,6 +198,20 @@ int main() {
         std::cout << "Main Robot Warning :: R200 - Returning System: disk returned that was not accounted from the Sorting System...\n";
     };
 
+    // Heartbeat Warning Messages
+    system.controller.heartbeat1.out.timeout = []{
+        std::cout << "Robot Communication Warning :: Heartbeat failure from robot 1. Failure to recieve heartbeat from robot 1 within 5 seconds...\n";
+    };
+    system.controller.heartbeat2.out.timeout = []{
+        std::cout << "Robot Communication Warning :: Heartbeat failure from robot 2. Failure to recieve heartbeat from robot 1 within 5 seconds...\n";
+    };
+    system.controller.heartbeat3.out.timeout = []{
+        std::cout << "Robot Communication Warning :: Heartbeat failure from robot 3. Failure to recieve heartbeat from robot 1 within 5 seconds...\n";
+    };
+    system.controller.heartbeat4.out.timeout = []{
+        std::cout << "Robot Communication Warning :: Heartbeat failure from robot 4. Failure to recieve heartbeat from robot 1 within 5 seconds...\n";
+    };
+
     system.controller.controller.in.reboot = []{
         DISK_COUNTER[0] = 0;
         DISK_COUNTER[1] = 0;
