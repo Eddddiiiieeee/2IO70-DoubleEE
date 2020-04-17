@@ -108,7 +108,10 @@ int main() {
     std::cout << "Run Without MQTT? (y/n): ";
     std::cin >> input;
     if (input == 'y') {
-        if(setup_mqtt()) return 1;
+        if(!setup_mqtt()) {
+            std::cout << "MQTT Failed...";
+            return 1;
+        }
         std::cout << "MQTT Enabled...\n";
     } else if (input == 'n') {
         communicate = false;
@@ -256,7 +259,7 @@ int main() {
         std::cout << "\t Return Disk Detector: " << digitalRead(PIN_SENSOR_RETURN_DETECT) << ". Should be: 1\n";
         std::cout << "\t Taker Piston Detector: " << digitalRead(PIN_ERROR_TAKE_PISTON) << ". Should be: 0\n";
         std::cout << "\t Sorting Piston Detector: " << digitalRead(PIN_ERROR_SORT_PISTON) << ". Should be: 0\n";
-
+        shutdown();
         return 1;
     }
     
