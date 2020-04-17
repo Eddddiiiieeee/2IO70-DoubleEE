@@ -64,6 +64,7 @@ int DISK_COUNTER[4];
 Robot* sys;
 const int MAX_DIFFERENCE = 3; // Max difference of disks
 bool SHUTDOWN = false;
+bool communicate = true;
 /*******************************************/
 
 
@@ -83,7 +84,10 @@ void recalculateData(char*);
 void shutdown(int signum) {
     std::cout << "Shutting Down..." << std::endl;
 
-    destroy_mqtt();
+    if (communicate) {
+        destroy_mqtt();
+    }
+
     sys->robot.in.stop();
 
     exit(signum);
@@ -97,24 +101,22 @@ int main() {
 
     Robot system(loc);
     sys = &system;
-    system.check_bindings();
-
+    
     setup_pins();
-    if(setup_mqtt()) return 1;
 
-    std::cout << "Commencing precheck sequence...\n";
-    if (!preCheck()) {
-        std::cout << "Pre Check Error :: One of the sensors give incorrect readings before startup: \n";
-        std::cout << "\t Color Sensor: " << digitalRead(PIN_SENSOR_COLOR) << ". Should be: 0\n";
-        std::cout << "\t Taker Disk Detector: " << digitalRead(PIN_SENSOR_TAKE_DETECT) << ". Should be: 1\n";
-        std::cout << "\t Sorter Disk Detector: " << digitalRead(PIN_SENSOR_SORT_DETECT) << ". Should be: 1\n";
-        std::cout << "\t Return Disk Detector: " << digitalRead(PIN_SENSOR_RETURN_DETECT) << ". Should be: 1\n";
-        std::cout << "\t Taker Piston Detector: " << digitalRead(PIN_ERROR_TAKE_PISTON) << ". Should be: 0\n";
-        std::cout << "\t Sorting Piston Detector: " << digitalRead(PIN_ERROR_SORT_PISTON) << ". Should be: 0\n";
-
-        return 1;
+    char input;
+    std::cout << "Run Without MQTT? (y/n): ";
+    std::cin >> input;
+    if (input == 'y') {
+        if(setup_mqtt()) return 1;
+        std::cout << "MQTT Enabled...\n";
+    } else if (input == 'n') {
+        communicate = false;
+        std::cout << "MQTT Disabled...\n";
+    } else {
+        std::cout << "Invalid input... Defaulting to running with MQTT...\n";
     }
-
+    
     DISK_COUNTER[0] = 0;
     DISK_COUNTER[1] = 0;
     DISK_COUNTER[2] = 0;
@@ -150,23 +152,43 @@ int main() {
 
     // Bind RaspberryPi ports
     system.robot.out.emergency = []{
-        mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), strlen(MSG_OUT_EMERGENCY), MSG_OUT_EMERGENCY, 0, false);
+        if (communicate) {
+            std::cout << "Communication :: Emergency! Reporting to broker...\n";
+            mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), strlen(MSG_OUT_EMERGENCY), MSG_OUT_EMERGENCY, 0, false);
+        } else {
+            std::cout << "Communication (TEST MODE) :: Emergency! Reporting to broker... (NO ACTUAL COMMUNICATION!)\n";
+        }
     };
     system.controller.controller.out.requestDiskCounters = []{
         // TODO: Consider if we want to use factory data
     };
     system.controller.controller.out.heartbeat = []{
-        mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_HEARTBEAT.length(), MSG_OUT_HEARTBEAT.c_str(), 0, false); 
+        if (communicate) {
+            std::cout << "Communication :: Sending our Heartbeat...\n";
+            mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_HEARTBEAT.length(), MSG_OUT_HEARTBEAT.c_str(), 0, false); 
+        } else {
+            std::cout << "Communication (TEST MODE) :: Sending our Heartbeat... (NO ACTUAL COMMUNICATION!)\n";
+        }
     };
     system.controller.controller.out.tookDisk_out = []{
         DISK_COUNTER[ROBOT_NUMBER] += 1;
-        mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_TOOK_DISK.length(), MSG_OUT_TOOK_DISK.c_str(), 0, false); 
+        if (communicate) {
+            std::cout << "Communication :: Disk taken; signaling to robots...\n";
+            mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_TOOK_DISK.length(), MSG_OUT_TOOK_DISK.c_str(), 0, false); 
+        } else {
+            std::cout << "Communication (TEST MODE) :: Disk taken; signaling to robots... (NO ACTUAL COMMUNICATION!)\n";
+        }
     };
     system.controller.controller.out.error_out = []{
         recovery();
     };
     system.controller.controller.out.requestDisksTaken = []{
-        mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_REQUEST_DISKS_TAKEN.length(), MSG_OUT_REQUEST_DISKS_TAKEN.c_str(), 0, false);
+        if (communicate) {
+            std::cout << "Communication :: Requesting disk data from other robots.\n";
+            mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_REQUEST_DISKS_TAKEN.length(), MSG_OUT_REQUEST_DISKS_TAKEN.c_str(), 0, false);
+        } else {
+            std::cout << "Communication (TEST MODE) :: Requesting disk data from other robots. (NO ACTUAL COMMUNICATION!)\n";
+        }
     };
 
     // Binding error codes
@@ -219,8 +241,28 @@ int main() {
         DISK_COUNTER[3] = 0;
     };
 
+    std::cout << "Checking Dezyne Bindings...\n";
+    system.check_bindings();
+
     // Shutdown signal CTRL + C
     signal(SIGINT, shutdown);
+
+    std::cout << "Commencing precheck sequence...\n";
+    if (!preCheck()) {
+        std::cout << "Pre Check Error :: One of the sensors give incorrect readings before startup: \n";
+        std::cout << "\t Color Sensor: " << digitalRead(PIN_SENSOR_COLOR) << ". Should be: 0\n";
+        std::cout << "\t Taker Disk Detector: " << digitalRead(PIN_SENSOR_TAKE_DETECT) << ". Should be: 1\n";
+        std::cout << "\t Sorter Disk Detector: " << digitalRead(PIN_SENSOR_SORT_DETECT) << ". Should be: 1\n";
+        std::cout << "\t Return Disk Detector: " << digitalRead(PIN_SENSOR_RETURN_DETECT) << ". Should be: 1\n";
+        std::cout << "\t Taker Piston Detector: " << digitalRead(PIN_ERROR_TAKE_PISTON) << ". Should be: 0\n";
+        std::cout << "\t Sorting Piston Detector: " << digitalRead(PIN_ERROR_SORT_PISTON) << ". Should be: 0\n";
+
+        return 1;
+    }
+    
+    if (!communicate) { // Start if no communication (start tests)
+        system.robot.in.start();
+    }
 
     // Event Loop
     while (true) {
