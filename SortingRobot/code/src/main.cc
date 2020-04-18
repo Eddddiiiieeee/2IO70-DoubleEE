@@ -93,7 +93,7 @@ int main() {
 
     // MQTT Initialization
     char input;
-    std::cout << "Run Without MQTT? (y/n): ";
+    std::cout << "Run With MQTT? (y/n): ";
     std::cin >> input;
     if (input == 'y') {
         if(!setup_mqtt()) {
