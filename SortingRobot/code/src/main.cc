@@ -84,7 +84,9 @@ void recalculateData(char*);
 int main() {
     dzn::locator loc;
     dzn::runtime rt;
+    dzn::illegal_handler illegalHandler;
     loc.set(rt);
+    loc.set(illegalHandler);
 
     Robot system(loc);
     sys = &system;
