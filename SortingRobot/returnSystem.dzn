@@ -89,6 +89,7 @@ component Returner {
 				// TODO: Consider if this is illegal
 			}
 			on returner.getErrorState(): {reply(errorState);}
+			on timer.timeout(), diskDetector.triggered(): {}
 		}
 		
 		[state.Running] {
@@ -166,6 +167,7 @@ component Returner {
 			on returner.addDisk(): {}
 			on returner.getErrorState(): {reply(errorState);}
 			on firstBelt.error(), elevatedBelt.error(): {}
+			on timer.timeout(), diskDetector.triggered(): {}
 		}
 	}
 }

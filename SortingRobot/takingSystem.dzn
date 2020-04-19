@@ -72,6 +72,7 @@ component Taker {
 			on taker.stop(): {}
 			on blocker.error(): {}
 			on taker.getErrorState(): {reply(errorState);}
+			on diskDetector.triggered(): {}
 		}
 		[state.Running] {
 			on taker.start(): {}
@@ -109,6 +110,7 @@ component Taker {
 			}
 			on blocker.error(): {}
 			on taker.getErrorState(): {reply(errorState);}
+			on diskDetector.triggered(): {}
 		}
 	}
 }

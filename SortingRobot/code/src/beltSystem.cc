@@ -86,7 +86,8 @@ void BeltController::sensor_triggered()
     this->timer.in.cancel();
     this->timer.in.start(interval);
   }
-  else if ((!(state == ::BeltController::State::Running) && !(state == ::BeltController::State::Idle))) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::BeltController::State::Error) ;
+  else if ((!(state == ::BeltController::State::Error) && (!(state == ::BeltController::State::Running) && !(state == ::BeltController::State::Idle)))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;
@@ -94,13 +95,15 @@ void BeltController::sensor_triggered()
 }
 void BeltController::timer_timeout()
 {
-  if (state == ::BeltController::State::Running) 
+  if (state == ::BeltController::State::Idle) ;
+  else if (state == ::BeltController::State::Running) 
   {
     state = ::BeltController::State::Error;
     this->controller.out.error();
     this->motor.in.stop();
   }
-  else if (!(state == ::BeltController::State::Running)) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::BeltController::State::Error) ;
+  else if ((!(state == ::BeltController::State::Error) && (!(state == ::BeltController::State::Running) && !(state == ::BeltController::State::Idle)))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;

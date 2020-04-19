@@ -111,12 +111,14 @@ void Sorter::sorter_stop()
 }
 void Sorter::diskDetector_triggered()
 {
-  if (state == ::ISorter::State::Running) 
+  if (state == ::ISorter::State::Stopped) ;
+  else if (state == ::ISorter::State::Running) 
   {
     this->colorTimer.in.start(diskScanInterval);
     this->colorSensor.in.activate();
   }
-  else if (!(state == ::ISorter::State::Running)) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::ISorter::State::Error) ;
+  else if ((!(state == ::ISorter::State::Error) && (!(state == ::ISorter::State::Running) && !(state == ::ISorter::State::Stopped)))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;
@@ -124,11 +126,13 @@ void Sorter::diskDetector_triggered()
 }
 void Sorter::colorSensor_triggered()
 {
-  if (state == ::ISorter::State::Running) 
+  if (state == ::ISorter::State::Stopped) ;
+  else if (state == ::ISorter::State::Running) 
   {
     this->blocker.in.trigger(extendTime,timeoutTime);
   }
-  else if (!(state == ::ISorter::State::Running)) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::ISorter::State::Error) ;
+  else if ((!(state == ::ISorter::State::Error) && (!(state == ::ISorter::State::Running) && !(state == ::ISorter::State::Stopped)))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;
@@ -195,19 +199,24 @@ void Sorter::blocker_error()
 }
 void Sorter::detectorTimer_timeout()
 {
-  dzn_locator.get<dzn::illegal_handler>().illegal();
+  if (state == ::ISorter::State::Stopped) ;
+  else if (state == ::ISorter::State::Error) ;
+  else if ((!(state == ::ISorter::State::Error) && !(state == ::ISorter::State::Stopped))) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;
 
 }
 void Sorter::colorTimer_timeout()
 {
-  if (state == ::ISorter::State::Running) 
+  if (state == ::ISorter::State::Stopped) ;
+  else if (state == ::ISorter::State::Running) 
   {
     this->colorSensor.in.deactivate();
     this->sorter.out.returnDisk();
   }
-  else if (!(state == ::ISorter::State::Running)) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::ISorter::State::Error) ;
+  else if ((!(state == ::ISorter::State::Error) && (!(state == ::ISorter::State::Running) && !(state == ::ISorter::State::Stopped)))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;

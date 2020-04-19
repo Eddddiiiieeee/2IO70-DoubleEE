@@ -133,13 +133,15 @@ void Taker::blocker_error()
 }
 void Taker::diskDetector_triggered()
 {
-  if (state == ::ITaking::State::Running) 
+  if (state == ::ITaking::State::Stopped) ;
+  else if (state == ::ITaking::State::Running) 
   {
     this->blocker.in.trigger(extendTime,timeoutTime);
     this->taker.out.tookDisk();
     this->diskDetector.in.activate();
   }
-  else if (!(state == ::ITaking::State::Running)) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::ITaking::State::Error) ;
+  else if ((!(state == ::ITaking::State::Error) && (!(state == ::ITaking::State::Running) && !(state == ::ITaking::State::Stopped)))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;

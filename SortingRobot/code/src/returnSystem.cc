@@ -127,7 +127,8 @@ void Returner::returner_addDisk()
 }
 void Returner::diskDetector_triggered()
 {
-  if ((state == ::IReturner::State::Running && queue == 0)) 
+  if (state == ::IReturner::State::Stopped) ;
+  else if ((state == ::IReturner::State::Running && queue == 0)) 
   {
     this->diskDetector.in.activate();
     this->returner.out.warning();
@@ -140,7 +141,8 @@ void Returner::diskDetector_triggered()
     this->timer.in.start(returningTime);
     this->diskDetector.in.activate();
   }
-  else if ((!((state == ::IReturner::State::Running && queue > 0)) && !((state == ::IReturner::State::Running && queue == 0)))) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::IReturner::State::Error) ;
+  else if ((!(state == ::IReturner::State::Error) && (!((state == ::IReturner::State::Running && queue > 0)) && (!((state == ::IReturner::State::Running && queue == 0)) && !(state == ::IReturner::State::Stopped))))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;
@@ -188,7 +190,8 @@ void Returner::elevatedBelt_error()
 }
 void Returner::timer_timeout()
 {
-  if (state == ::IReturner::State::Running) 
+  if (state == ::IReturner::State::Stopped) ;
+  else if (state == ::IReturner::State::Running) 
   {
     this->returner.out.error();
     this->diskDetector.in.deactivate();
@@ -197,7 +200,8 @@ void Returner::timer_timeout()
     state = ::IReturner::State::Error;
     errorState = ::IReturner::ReturnerErrors::R290;
   }
-  else if (!(state == ::IReturner::State::Running)) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::IReturner::State::Error) ;
+  else if ((!(state == ::IReturner::State::Error) && (!(state == ::IReturner::State::Running) && !(state == ::IReturner::State::Stopped)))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;

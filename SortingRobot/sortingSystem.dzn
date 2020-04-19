@@ -93,6 +93,8 @@ component Sorter {
 			on sorter.getErrorState(): {reply(errorState);}
 			on sorter.stop(): illegal;
 			on blocker.error(), belt.error(): {}
+			on detectorTimer.timeout(), colorTimer.timeout(): {}
+			on diskDetector.triggered(), colorSensor.triggered(): {}
 		}
 		[state.Running] {
 			on sorter.stop(): {
@@ -176,6 +178,8 @@ component Sorter {
 			}
 			on sorter.getErrorState(): {reply(errorState);}
 			on blocker.error(), belt.error(): {}
+			on detectorTimer.timeout(), colorTimer.timeout(): {}
+			on diskDetector.triggered(), colorSensor.triggered(): {}
 		}
 	}
 }

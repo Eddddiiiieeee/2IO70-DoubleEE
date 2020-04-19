@@ -63,6 +63,7 @@ component BeltController {
 			// TODO: Consider if illegal statement:
 			on sensor.triggered(): {} // Illegal? since motor does not stop?
 			on controller.stop(): illegal;
+			on timer.timeout(): {}
 		}
 		
 		[state.Running] {
@@ -91,6 +92,7 @@ component BeltController {
 				//motor.stop();
 				state = State.Idle;
 			}
+			on timer.timeout(), sensor.triggered(): {}
 		}
 	}
 }
