@@ -76,6 +76,7 @@ component RaspberryPi {
 			   heartbeat2.timeout(), 
 			   heartbeat3.timeout(), 
 			   heartbeat4.timeout():{}
+			on controller.pauseTaking(), controller.resumeTaking(): {}
 		}
 		[state.Running] {
 			on controller.stop(), controller.emergencyStop(): {
@@ -231,7 +232,7 @@ component RaspberryPi {
 				heartbeatClock.cancel();
 			}
 			
-			on controller.pauseTaking(): {}
+			on controller.pauseTaking(), controller.resumeTaking(): {}
 			
 			on controller.reboot(): {
 				state = State.Running;

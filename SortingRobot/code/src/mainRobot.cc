@@ -278,25 +278,8 @@ void RaspberryPi::controller_reboot()
 }
 void RaspberryPi::controller_resumeTaking()
 {
-  if (state == ::RaspberryPi::State::Running) 
-  {
-    ::ITaking::TakingErrors::type takeState = this->taker.in.getErrorState();
-    {
-      if (takeState == ::ITaking::TakingErrors::none) 
-      {
-        this->taker.in.start();
-      }
-    }
-  }
-  else if (!(state == ::RaspberryPi::State::Running)) dzn_locator.get<dzn::illegal_handler>().illegal();
-  else dzn_locator.get<dzn::illegal_handler>().illegal();
-
-  return;
-
-}
-void RaspberryPi::controller_pauseTaking()
-{
-  if (state == ::RaspberryPi::State::Running) 
+  if (state == ::RaspberryPi::State::Idle) ;
+  else if (state == ::RaspberryPi::State::Running) 
   {
     ::ITaking::TakingErrors::type takeState = this->taker.in.getErrorState();
     {
@@ -307,7 +290,27 @@ void RaspberryPi::controller_pauseTaking()
     }
   }
   else if (state == ::RaspberryPi::State::Error) ;
-  else if ((!(state == ::RaspberryPi::State::Error) && !(state == ::RaspberryPi::State::Running))) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if ((!(state == ::RaspberryPi::State::Error) && (!(state == ::RaspberryPi::State::Running) && !(state == ::RaspberryPi::State::Idle)))) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else dzn_locator.get<dzn::illegal_handler>().illegal();
+
+  return;
+
+}
+void RaspberryPi::controller_pauseTaking()
+{
+  if (state == ::RaspberryPi::State::Idle) ;
+  else if (state == ::RaspberryPi::State::Running) 
+  {
+    ::ITaking::TakingErrors::type takeState = this->taker.in.getErrorState();
+    {
+      if (takeState == ::ITaking::TakingErrors::none) 
+      {
+        this->taker.in.start();
+      }
+    }
+  }
+  else if (state == ::RaspberryPi::State::Error) ;
+  else if ((!(state == ::RaspberryPi::State::Error) && (!(state == ::RaspberryPi::State::Running) && !(state == ::RaspberryPi::State::Idle)))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;

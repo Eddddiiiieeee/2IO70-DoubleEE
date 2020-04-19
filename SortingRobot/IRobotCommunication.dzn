@@ -56,7 +56,7 @@ interface IRobotCommunication {
 			on emergencyStop: {}
 		}
 		
-		on resumeTaking, pauseTaking: illegal;
+		on resumeTaking, pauseTaking: {}
 		
 		[state.Running] {
 			on stop, emergencyStop: state = State.Idle;
