@@ -231,6 +231,8 @@ component RaspberryPi {
 				heartbeatClock.cancel();
 			}
 			
+			on controller.pauseTaking(): {}
+			
 			on controller.reboot(): {
 				state = State.Running;
 				//controller.requestDisksTaken();

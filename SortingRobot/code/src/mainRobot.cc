@@ -306,7 +306,8 @@ void RaspberryPi::controller_pauseTaking()
       }
     }
   }
-  else if (!(state == ::RaspberryPi::State::Running)) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::RaspberryPi::State::Error) ;
+  else if ((!(state == ::RaspberryPi::State::Error) && !(state == ::RaspberryPi::State::Running))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;
