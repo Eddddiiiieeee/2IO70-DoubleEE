@@ -156,7 +156,8 @@ void BlockerController::sensor_triggered()
 }
 void BlockerController::pistonTimer_timeout()
 {
-  if ((state == ::BlockerController::State::Extended && pistonExtended)) 
+  if (state == ::BlockerController::State::Retracted) ;
+  else if ((state == ::BlockerController::State::Extended && pistonExtended)) 
   {
     this->piston.in.retract();
     pistonExtended = !(pistonExtended);
@@ -173,7 +174,8 @@ void BlockerController::pistonTimer_timeout()
     state = ::BlockerController::State::Error;
     errorState = ::IBlocker::BlockerErrors::pistonRetracted;
   }
-  else if ((!((state == ::BlockerController::State::Extended && !(pistonExtended))) && !((state == ::BlockerController::State::Extended && pistonExtended)))) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::BlockerController::State::Error) ;
+  else if ((!(state == ::BlockerController::State::Error) && (!((state == ::BlockerController::State::Extended && !(pistonExtended))) && (!((state == ::BlockerController::State::Extended && pistonExtended)) && !(state == ::BlockerController::State::Retracted))))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;
@@ -191,7 +193,8 @@ void BlockerController::timeout_timeout()
     state = ::BlockerController::State::Error;
     errorState = ::IBlocker::BlockerErrors::pistonRetracted;
   }
-  else if ((!(state == ::BlockerController::State::Extended) && !(state == ::BlockerController::State::Retracted))) dzn_locator.get<dzn::illegal_handler>().illegal();
+  else if (state == ::BlockerController::State::Error) ;
+  else if ((!(state == ::BlockerController::State::Error) && (!(state == ::BlockerController::State::Extended) && !(state == ::BlockerController::State::Retracted)))) dzn_locator.get<dzn::illegal_handler>().illegal();
   else dzn_locator.get<dzn::illegal_handler>().illegal();
 
   return;

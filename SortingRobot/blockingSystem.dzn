@@ -86,7 +86,7 @@ component BlockerController {
 				state = State.Extended;
 			}
 			
-			on controller.stop(), timeout.timeout(): {}
+			on controller.stop(), timeout.timeout(), pistonTimer.timeout(): {}
 			
 			on sensor.triggered(): { // Piston stuck on.
 				controller.error();
@@ -182,6 +182,7 @@ component BlockerController {
 			}
 			on controller.trigger(extendTime, timeoutTime), sensor.triggered(): {}
 			on controller.getErrorState(): {reply(errorState);}
+			on timeout.timeout(), pistonTimer.timeout(): {}
 		}
 	}
 }
