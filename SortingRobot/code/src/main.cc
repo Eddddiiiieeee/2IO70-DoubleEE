@@ -136,19 +136,28 @@ int main() {
 
 
     // Bind Motors and Pistons
-    system.taker.blocker.piston.piston.in.extend = []{ digitalWrite(PIN_PISTON_TAKE, 1); };
-    system.taker.blocker.piston.piston.in.retract = []{ digitalWrite(PIN_PISTON_TAKE, 0); };
+    //system.taker.blocker.piston.piston.in.extend = []{ digitalWrite(PIN_PISTON_TAKE, 1); };
+    //system.taker.blocker.piston.piston.in.retract = []{ digitalWrite(PIN_PISTON_TAKE, 0); };
+    system.taker.blocker.controller.piston.in.extend = []{ digitalWrite(PIN_PISTON_TAKE, 1); };
+    system.taker.blocker.controller.piston.in.retract = []{ digitalWrite(PIN_PISTON_TAKE, 0); };
 
-    system.sorter.blocker.piston.piston.in.extend = []{ digitalWrite(PIN_PISTON_SORT, 1); };
-    system.sorter.blocker.piston.piston.in.retract = []{ digitalWrite(PIN_PISTON_SORT, 0); };
-    system.sorter.belt.motor.motor.in.start = []{ digitalWrite(PIN_MOTOR_SORT, 1); };
-    system.sorter.belt.motor.motor.in.stop = []{ digitalWrite(PIN_MOTOR_SORT, 0); };
+    //system.sorter.blocker.piston.piston.in.extend = []{ digitalWrite(PIN_PISTON_SORT, 1); };
+    //system.sorter.blocker.piston.piston.in.retract = []{ digitalWrite(PIN_PISTON_SORT, 0); };
+    //system.sorter.belt.motor.motor.in.start = []{ digitalWrite(PIN_MOTOR_SORT, 1); };
+    //system.sorter.belt.motor.motor.in.stop = []{ digitalWrite(PIN_MOTOR_SORT, 0); };
+    system.sorter.blocker.controller.piston.in.extend = []{ digitalWrite(PIN_PISTON_SORT, 1); };
+    system.sorter.blocker.controller.piston.in.retract = []{ digitalWrite(PIN_PISTON_SORT, 0); };
+    system.sorter.belt.controller.motor.in.start = []{ digitalWrite(PIN_MOTOR_SORT, 1); };
+    system.sorter.belt.controller.motor.in.stop = []{ digitalWrite(PIN_MOTOR_SORT, 0); };
 
-    system.returner.firstBelt.motor.motor.in.start = []{ digitalWrite(PIN_MOTOR1_RETURN, 1); };
-    system.returner.firstBelt.motor.motor.in.stop = []{ digitalWrite(PIN_MOTOR1_RETURN, 0); };
-    system.returner.elevatedBelt.motor.motor.in.start = []{ digitalWrite(PIN_MOTOR2_RETURN, 1); };
-    system.returner.elevatedBelt.motor.motor.in.start = []{ digitalWrite(PIN_MOTOR2_RETURN, 0); };
-
+    //system.returner.firstBelt.motor.motor.in.start = []{ digitalWrite(PIN_MOTOR1_RETURN, 1); };
+    //system.returner.firstBelt.motor.motor.in.stop = []{ digitalWrite(PIN_MOTOR1_RETURN, 0); };
+    //system.returner.elevatedBelt.motor.motor.in.start = []{ digitalWrite(PIN_MOTOR2_RETURN, 1); };
+    //system.returner.elevatedBelt.motor.motor.in.start = []{ digitalWrite(PIN_MOTOR2_RETURN, 0); };
+    system.returner.firstBelt.controller.motor.in.start = []{ digitalWrite(PIN_MOTOR1_RETURN, 1); };
+    system.returner.firstBelt.controller.motor.in.stop = []{ digitalWrite(PIN_MOTOR1_RETURN, 0); };
+    system.returner.elevatedBelt.controller.motor.in.start = []{ digitalWrite(PIN_MOTOR2_RETURN, 1); };
+    system.returner.elevatedBelt.controller.motor.in.stop = []{ digitalWrite(PIN_MOTOR2_RETURN, 0); };
 
     // Bind RaspberryPi ports
     system.robot.out.emergency = []{
@@ -295,7 +304,7 @@ int main() {
         system.sorter.blocker.timeoutTimer.checkTimer();
         system.sorter.belt.timer.checkTimer();
         system.sorter.colorTimer.checkTimer();
-        system.sorter.detectorTimer.checkTimer();
+        //system.sorter.detectorTimer.checkTimer();
         // Check Sorter Sensors
         system.sorter.blocker.button.checkSensor();
         system.sorter.belt.button.checkSensor();
