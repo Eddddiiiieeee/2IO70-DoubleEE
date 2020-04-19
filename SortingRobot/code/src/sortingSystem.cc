@@ -112,6 +112,7 @@ void Sorter::diskDetector_triggered()
   if (state == ::ISorter::State::Stopped) ;
   else if (state == ::ISorter::State::Running) 
   {
+    this->colorTimer.in.cancel();
     this->colorTimer.in.start(diskScanInterval);
     this->colorSensor.in.activate();
   }
@@ -128,6 +129,8 @@ void Sorter::colorSensor_triggered()
   else if (state == ::ISorter::State::Running) 
   {
     this->blocker.in.trigger(extendTime,timeoutTime);
+    this->diskDetector.in.deactivate();
+    this->diskDetector.in.activate();
   }
   else if (state == ::ISorter::State::Error) ;
   else if ((!(state == ::ISorter::State::Error) && (!(state == ::ISorter::State::Running) && !(state == ::ISorter::State::Stopped)))) dzn_locator.get<dzn::illegal_handler>().illegal();
@@ -202,6 +205,8 @@ void Sorter::colorTimer_timeout()
   {
     this->colorSensor.in.deactivate();
     this->sorter.out.returnDisk();
+    this->diskDetector.in.deactivate();
+    this->diskDetector.in.activate();
   }
   else if (state == ::ISorter::State::Error) ;
   else if ((!(state == ::ISorter::State::Error) && (!(state == ::ISorter::State::Running) && !(state == ::ISorter::State::Stopped)))) dzn_locator.get<dzn::illegal_handler>().illegal();

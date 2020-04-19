@@ -109,6 +109,7 @@ component Sorter {
 			on diskDetector.triggered(): {
 				//detectorTimer.start(diskTime);
 				//queue = queue + 1;
+				colorTimer.cancel();
 				colorTimer.start(diskScanInterval); // TODO: Maybe add timer to reactivate the disk detector?
 				colorSensor.activate();
 			}
@@ -121,6 +122,8 @@ component Sorter {
 			on colorTimer.timeout(): {
 				colorSensor.deactivate();
 				sorter.returnDisk();
+				diskDetector.deactivate();
+				diskDetector.activate();
 			}
 			
 			on colorSensor.triggered(): { // Sort light disk
@@ -129,6 +132,8 @@ component Sorter {
 				//}
 				//[queue != 0] {
 				blocker.trigger(extendTime, timeoutTime);
+				diskDetector.deactivate();
+				diskDetector.activate();
 					//queue = queue - 1;
 				//}
 			}
