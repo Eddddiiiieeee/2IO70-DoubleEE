@@ -378,7 +378,6 @@ namespace skel {
 #include "beltSystem.hh"
 #include "blockingSystem.hh"
 #include "ITimer.hh"
-#include "ITimer.hh"
 
 
 
@@ -405,7 +404,6 @@ struct Sorter
   ::IBasicSensor colorSensor;
   ::IBelt belt;
   ::IBlocker blocker;
-  ::ITimer detectorTimer;
   ::ITimer colorTimer;
 
 
@@ -424,7 +422,6 @@ struct Sorter
   void colorSensor_triggered();
   void belt_error();
   void blocker_error();
-  void detectorTimer_timeout();
   void colorTimer_timeout();
 
 };
@@ -444,7 +441,6 @@ struct Sorter
 #include "beltSystem.hh"
 #include "blockingSystem.hh"
 #include "Timer.hh"
-#include "Timer.hh"
 
 
 
@@ -460,7 +456,6 @@ struct SortingSystem
   ::ColorSensor colorSensor;
   ::Belt belt;
   ::Blocker blocker;
-  ::Timer detectorTimer;
   ::Timer colorTimer;
 
   ::ISorter& sortingSystem;

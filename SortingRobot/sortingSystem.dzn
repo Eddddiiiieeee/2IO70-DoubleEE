@@ -49,7 +49,7 @@ component SortingSystem {
 		ColorSensor colorSensor;
 		Belt belt;
 		Blocker blocker;
-		Timer detectorTimer;
+		//Timer detectorTimer;
 		Timer colorTimer;
 		
 		sortingSystem <=> sorter.sorter;
@@ -57,7 +57,7 @@ component SortingSystem {
 		sorter.colorSensor <=> colorSensor.colorSensor;
 		sorter.belt <=> belt.belt;
 		sorter.blocker <=> blocker.blocker;
-		sorter.detectorTimer <=> detectorTimer.iTimer;
+		//sorter.detectorTimer <=> detectorTimer.iTimer;
 		sorter.colorTimer <=> colorTimer.iTimer;
 	}
 }
@@ -69,7 +69,7 @@ component Sorter {
 	requires IBasicSensor colorSensor;
 	requires IBelt belt;
 	requires IBlocker blocker;
-	requires ITimer detectorTimer;
+	//requires ITimer detectorTimer;
 	requires ITimer colorTimer;
 	
 	
@@ -93,7 +93,8 @@ component Sorter {
 			on sorter.getErrorState(): {reply(errorState);}
 			on sorter.stop(): illegal;
 			on blocker.error(), belt.error(): {}
-			on detectorTimer.timeout(), colorTimer.timeout(): {}
+			//on detectorTimer.timeout(), 
+			on colorTimer.timeout(): {}
 			on diskDetector.triggered(), colorSensor.triggered(): {}
 		}
 		[state.Running] {
@@ -178,7 +179,8 @@ component Sorter {
 			}
 			on sorter.getErrorState(): {reply(errorState);}
 			on blocker.error(), belt.error(): {}
-			on detectorTimer.timeout(), colorTimer.timeout(): {}
+			//on detectorTimer.timeout(), 
+			on colorTimer.timeout(): {}
 			on diskDetector.triggered(), colorSensor.triggered(): {}
 		}
 	}

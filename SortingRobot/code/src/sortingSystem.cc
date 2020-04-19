@@ -18,7 +18,7 @@
 
 
 Sorter::Sorter(const dzn::locator& dzn_locator)
-: dzn_meta{"","Sorter",0,0,{& diskDetector.meta,& colorSensor.meta,& belt.meta,& blocker.meta,& detectorTimer.meta,& colorTimer.meta},{},{[this]{sorter.check_bindings();},[this]{diskDetector.check_bindings();},[this]{colorSensor.check_bindings();},[this]{belt.check_bindings();},[this]{blocker.check_bindings();},[this]{detectorTimer.check_bindings();},[this]{colorTimer.check_bindings();}}}
+: dzn_meta{"","Sorter",0,0,{& diskDetector.meta,& colorSensor.meta,& belt.meta,& blocker.meta,& colorTimer.meta},{},{[this]{sorter.check_bindings();},[this]{diskDetector.check_bindings();},[this]{colorSensor.check_bindings();},[this]{belt.check_bindings();},[this]{blocker.check_bindings();},[this]{colorTimer.check_bindings();}}}
 , dzn_rt(dzn_locator.get<dzn::runtime>())
 , dzn_locator(dzn_locator)
 , extendTime(5000), timeoutTime(2500), diskScanInterval(5000), errorState(::ISorter::SortingErrors::none), state(::ISorter::State::Stopped)
@@ -29,7 +29,6 @@ Sorter::Sorter(const dzn::locator& dzn_locator)
 , colorSensor({{"",0,0},{"colorSensor",this,&dzn_meta}})
 , belt({{"",0,0},{"belt",this,&dzn_meta}})
 , blocker({{"",0,0},{"blocker",this,&dzn_meta}})
-, detectorTimer({{"",0,0},{"detectorTimer",this,&dzn_meta}})
 , colorTimer({{"",0,0},{"colorTimer",this,&dzn_meta}})
 
 
@@ -42,7 +41,6 @@ Sorter::Sorter(const dzn::locator& dzn_locator)
   colorSensor.out.triggered = [&](){return dzn::call_out(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->colorSensor) = false; return colorSensor_triggered();}, this->colorSensor.meta, "triggered");};
   belt.out.error = [&](){return dzn::call_out(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->belt) = false; return belt_error();}, this->belt.meta, "error");};
   blocker.out.error = [&](){return dzn::call_out(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->blocker) = false; return blocker_error();}, this->blocker.meta, "error");};
-  detectorTimer.out.timeout = [&](){return dzn::call_out(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->detectorTimer) = false; return detectorTimer_timeout();}, this->detectorTimer.meta, "timeout");};
   colorTimer.out.timeout = [&](){return dzn::call_out(this,[=]{ dzn_locator.get<dzn::runtime>().skip_block(&this->colorTimer) = false; return colorTimer_timeout();}, this->colorTimer.meta, "timeout");};
 
 
@@ -197,16 +195,6 @@ void Sorter::blocker_error()
   return;
 
 }
-void Sorter::detectorTimer_timeout()
-{
-  if (state == ::ISorter::State::Stopped) ;
-  else if (state == ::ISorter::State::Error) ;
-  else if ((!(state == ::ISorter::State::Error) && !(state == ::ISorter::State::Stopped))) dzn_locator.get<dzn::illegal_handler>().illegal();
-  else dzn_locator.get<dzn::illegal_handler>().illegal();
-
-  return;
-
-}
 void Sorter::colorTimer_timeout()
 {
   if (state == ::ISorter::State::Stopped) ;
@@ -236,7 +224,7 @@ void Sorter::dump_tree(std::ostream& os) const
 //SYSTEM
 
 SortingSystem::SortingSystem(const dzn::locator& dzn_locator)
-: dzn_meta{"","SortingSystem",0,0,{},{& sorter.dzn_meta,& diskDetector.dzn_meta,& colorSensor.dzn_meta,& belt.dzn_meta,& blocker.dzn_meta,& detectorTimer.dzn_meta,& colorTimer.dzn_meta},{[this]{sortingSystem.check_bindings();}}}
+: dzn_meta{"","SortingSystem",0,0,{},{& sorter.dzn_meta,& diskDetector.dzn_meta,& colorSensor.dzn_meta,& belt.dzn_meta,& blocker.dzn_meta,& colorTimer.dzn_meta},{[this]{sortingSystem.check_bindings();}}}
 , dzn_rt(dzn_locator.get<dzn::runtime>())
 , dzn_locator(dzn_locator)
 
@@ -246,7 +234,6 @@ SortingSystem::SortingSystem(const dzn::locator& dzn_locator)
 , colorSensor(dzn_locator)
 , belt(dzn_locator)
 , blocker(dzn_locator)
-, detectorTimer(dzn_locator)
 , colorTimer(dzn_locator)
 
 , sortingSystem(sorter.sorter)
@@ -264,8 +251,6 @@ SortingSystem::SortingSystem(const dzn::locator& dzn_locator)
   belt.dzn_meta.name = "belt";
   blocker.dzn_meta.parent = &dzn_meta;
   blocker.dzn_meta.name = "blocker";
-  detectorTimer.dzn_meta.parent = &dzn_meta;
-  detectorTimer.dzn_meta.name = "detectorTimer";
   colorTimer.dzn_meta.parent = &dzn_meta;
   colorTimer.dzn_meta.name = "colorTimer";
 
@@ -274,7 +259,6 @@ SortingSystem::SortingSystem(const dzn::locator& dzn_locator)
   connect(colorSensor.colorSensor, sorter.colorSensor);
   connect(belt.belt, sorter.belt);
   connect(blocker.blocker, sorter.blocker);
-  connect(detectorTimer.iTimer, sorter.detectorTimer);
   connect(colorTimer.iTimer, sorter.colorTimer);
 
   dzn::rank(sortingSystem.meta.provides.meta, 0);
