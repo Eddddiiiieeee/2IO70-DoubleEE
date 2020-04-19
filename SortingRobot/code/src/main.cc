@@ -171,7 +171,7 @@ int main() {
     system.controller.controller.out.requestDiskCounters = []{
         // TODO: Consider if we want to use factory data
     };
-    system.controller.controller.out.heartbeat = []{
+    system.robot.out.heartbeat = []{
         if (communicate) {
             std::cout << "Communication :: Sending our Heartbeat...\n";
             mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_HEARTBEAT.length(), MSG_OUT_HEARTBEAT.c_str(), 0, false); 
@@ -179,7 +179,15 @@ int main() {
             std::cout << "Communication (TEST MODE) :: Sending our Heartbeat... (NO ACTUAL COMMUNICATION!)\n";
         }
     };
-    system.controller.controller.out.tookDisk_out = []{
+    //system.controller.controller.out.heartbeat = []{
+    //    if (communicate) {
+    //        std::cout << "Communication :: Sending our Heartbeat...\n";
+    //        mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_HEARTBEAT.length(), MSG_OUT_HEARTBEAT.c_str(), 0, false); 
+    //    } else {
+    //        std::cout << "Communication (TEST MODE) :: Sending our Heartbeat... (NO ACTUAL COMMUNICATION!)\n";
+    //    }
+    //};
+    system.robot.out.tookDisk_out = []{
         DISK_COUNTER[ROBOT_NUMBER] += 1;
         if (communicate) {
             std::cout << "Communication :: Disk taken; signaling to robots...\n";
@@ -188,6 +196,16 @@ int main() {
             std::cout << "Communication (TEST MODE) :: Disk taken; signaling to robots... (NO ACTUAL COMMUNICATION!)\n";
         }
     };
+    //system.controller.controller.out.tookDisk_out = []{
+    //    DISK_COUNTER[ROBOT_NUMBER] += 1;
+    //    if (communicate) {
+    //        std::cout << "Communication :: Disk taken; signaling to robots...\n";
+    //        mosquitto_publish(mosq, nullptr, OUTPUT_CHANNEL.c_str(), MSG_OUT_TOOK_DISK.length(), MSG_OUT_TOOK_DISK.c_str(), 0, false); 
+    //    } else {
+    //        std::cout << "Communication (TEST MODE) :: Disk taken; signaling to robots... (NO ACTUAL COMMUNICATION!)\n";
+    //    }
+    //};
+    
     system.controller.controller.out.error_out = []{
         recovery();
     };
